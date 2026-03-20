@@ -12,6 +12,8 @@ import {
   FileCheck,
   ChevronRight,
   AlertCircle,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react';
 
 export default function PerformanceMarketerAssetsPage() {
@@ -36,7 +38,7 @@ export default function PerformanceMarketerAssetsPage() {
     }
   };
 
-  const getAssetTypeIcon = (type) => {
+  const getTaskTypeIcon = (type) => {
     switch (type) {
       case 'imageCreatives':
         return <Image className="w-4 h-4" />;
@@ -51,7 +53,7 @@ export default function PerformanceMarketerAssetsPage() {
     }
   };
 
-  const getAssetTypeLabel = (type) => {
+  const getTaskTypeLabel = (type) => {
     switch (type) {
       case 'imageCreatives':
         return 'Image Creatives';
@@ -66,6 +68,15 @@ export default function PerformanceMarketerAssetsPage() {
     }
   };
 
+  // Calculate total stats across all projects
+  const getTotalStats = () => {
+    return projects.reduce((acc, project) => ({
+      total: acc.total + (project.taskStats?.total || 0),
+      finalApproved: acc.finalApproved + (project.taskStats?.finalApproved || 0),
+      rejected: acc.rejected + (project.taskStats?.rejected || 0),
+    }), { total: 0, finalApproved: 0, rejected: 0 });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -74,61 +85,44 @@ export default function PerformanceMarketerAssetsPage() {
     );
   }
 
+  const totalStats = getTotalStats();
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Assets</h1>
-          <p className="text-gray-600 mt-1">View all approved assets across your assigned projects</p>
+          <h1 className="text-2xl font-bold text-gray-900">Assets Pipeline</h1>
+          <p className="text-gray-600 mt-1">Track all tasks and assets across your projects</p>
         </div>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardBody className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Projects</p>
-                <p className="text-2xl font-bold text-gray-900">{projects.length}</p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <FolderKanban className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
+          <CardBody className="p-4 text-center">
+            <p className="text-sm text-gray-500 mb-1">Total Tasks</p>
+            <p className="text-2xl font-bold text-gray-900">{totalStats.total}</p>
           </CardBody>
         </Card>
 
         <Card>
-          <CardBody className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Assets</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {projects.reduce((sum, p) => sum + (p.assetStats?.total || 0), 0)}
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <FileCheck className="w-6 h-6 text-purple-600" />
-              </div>
+          <CardBody className="p-4 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <CheckCircle className="w-5 h-5 text-green-500" />
             </div>
+            <p className="text-sm text-gray-500 mb-1">Final Approved</p>
+            <p className="text-2xl font-bold text-green-600">{totalStats.finalApproved}</p>
           </CardBody>
         </Card>
 
         <Card>
-          <CardBody className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Fully Approved</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {projects.reduce((sum, p) => sum + (p.assetStats?.finalApproved || 0), 0)}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <FileCheck className="w-6 h-6 text-green-600" />
-              </div>
+          <CardBody className="p-4 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <XCircle className="w-5 h-5 text-red-500" />
             </div>
+            <p className="text-sm text-gray-500 mb-1">Rejected</p>
+            <p className="text-2xl font-bold text-red-600">{totalStats.rejected}</p>
           </CardBody>
         </Card>
       </div>
@@ -138,9 +132,9 @@ export default function PerformanceMarketerAssetsPage() {
         <Card>
           <CardBody className="text-center py-12">
             <AlertCircle className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No projects with approved assets found</p>
+            <p className="text-gray-500">No projects found</p>
             <p className="text-sm text-gray-400 mt-2">
-              Projects with approved assets will appear here
+              Projects assigned to you will appear here
             </p>
           </CardBody>
         </Card>
@@ -170,32 +164,37 @@ export default function PerformanceMarketerAssetsPage() {
                       </span>
                     )}
 
-                    {/* Asset Stats */}
+                    {/* Task Stats */}
                     <div className="flex flex-wrap gap-4 mt-3">
                       <div className="flex items-center gap-2 text-sm">
                         <FileCheck className="w-4 h-4 text-gray-400" />
                         <span className="text-gray-600">Total:</span>
-                        <span className="font-medium">{project.assetStats?.total || 0}</span>
+                        <span className="font-medium">{project.taskStats?.total || 0}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <FileCheck className="w-4 h-4 text-green-500" />
-                        <span className="text-gray-600">Approved:</span>
-                        <span className="font-medium text-green-600">{project.assetStats?.finalApproved || 0}</span>
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-gray-600">Final Approved:</span>
+                        <span className="font-medium text-green-600">{project.taskStats?.finalApproved || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <XCircle className="w-4 h-4 text-red-500" />
+                        <span className="text-gray-600">Rejected:</span>
+                        <span className="font-medium text-red-600">{project.taskStats?.rejected || 0}</span>
                       </div>
                     </div>
 
-                    {/* Asset Type Breakdown */}
+                    {/* Task Type Breakdown */}
                     <div className="flex flex-wrap gap-2 mt-3">
-                      {Object.entries(project.assetsByType?.all || {}).map(([type, assets]) => {
-                        const count = assets?.length || 0;
+                      {Object.entries(project.tasksByType?.all || {}).map(([type, tasks]) => {
+                        const count = tasks?.length || 0;
                         if (count === 0) return null;
                         return (
                           <span
                             key={type}
                             className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700"
                           >
-                            {getAssetTypeIcon(type)}
-                            <span>{getAssetTypeLabel(type)}: {count}</span>
+                            {getTaskTypeIcon(type)}
+                            <span>{getTaskTypeLabel(type)}: {count}</span>
                           </span>
                         );
                       })}
@@ -211,7 +210,7 @@ export default function PerformanceMarketerAssetsPage() {
                         navigate(`/assets/project/${project._id}`);
                       }}
                     >
-                      View Assets
+                      View Details
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>

@@ -53,16 +53,71 @@ const STAGE_NAMES = {
   creativeStrategy: 'Creative Strategy Execution'
 };
 
-// Role labels
+// Role labels - maps field names to display labels
 const ROLE_LABELS = {
+  // Array fields (plural) - new format
+  performanceMarketers: 'Performance Marketer',
+  contentWriters: 'Content Writer',
+  uiUxDesigners: 'UI/UX Designer',
+  graphicDesigners: 'Graphic Designer',
+  videoEditors: 'Video Editor',
+  developers: 'Developer',
+  testers: 'Tester',
+  // Legacy fields (singular) - old format
   performanceMarketer: 'Performance Marketer',
-  contentCreator: 'Content Creator',
   contentWriter: 'Content Writer',
   uiUxDesigner: 'UI/UX Designer',
   graphicDesigner: 'Graphic Designer',
   videoEditor: 'Video Editor',
   developer: 'Developer',
   tester: 'Tester',
+};
+
+// Helper function to extract team members from assignedTeam
+const extractTeamMembers = (assignedTeam) => {
+  if (!assignedTeam) return [];
+
+  const members = [];
+  const processedUsers = new Set(); // Track processed users by ID
+
+  // Field configurations: [arrayField, legacyField, displayLabel]
+  const fieldConfigs = [
+    ['performanceMarketers', 'performanceMarketer', 'Performance Marketer'],
+    ['contentWriters', 'contentWriter', 'Content Writer'],
+    ['uiUxDesigners', 'uiUxDesigner', 'UI/UX Designer'],
+    ['graphicDesigners', 'graphicDesigner', 'Graphic Designer'],
+    ['videoEditors', 'videoEditor', 'Video Editor'],
+    ['developers', 'developer', 'Developer'],
+    ['testers', 'tester', 'Tester'],
+  ];
+
+  fieldConfigs.forEach(([arrayField, legacyField, displayLabel]) => {
+    // Check array field first (new format)
+    if (assignedTeam[arrayField] && Array.isArray(assignedTeam[arrayField])) {
+      assignedTeam[arrayField].forEach((member) => {
+        if (member && member._id && member.name && !processedUsers.has(member._id)) {
+          processedUsers.add(member._id);
+          members.push({
+            ...member,
+            roleLabel: displayLabel,
+          });
+        }
+      });
+    }
+    // Check legacy field (old format) - only if not already found in array
+    if (assignedTeam[legacyField] && assignedTeam[legacyField]._id && assignedTeam[legacyField].name) {
+      const member = assignedTeam[legacyField];
+      if (!processedUsers.has(member._id)) {
+        processedUsers.add(member._id);
+        members.push({
+          ...member,
+          roleLabel: displayLabel,
+        });
+      }
+    }
+  });
+
+  return members;
 };
 
 export default function ProjectDetailPage() {
@@ -220,12 +275,12 @@ export default function ProjectDetailPage() {
                 <Users className="w-4 h-4 mr-2" />
                 Assign Team
               </Button>
-              {!project.isActive && project.assignedTeam?.performanceMarketer && (
+              {/* {!project.isActive && project.assignedTeam?.performanceMarketer && (
                 <Button onClick={handleActivate}>
                   <Play className="w-4 h-4 mr-2" />
                   Activate
                 </Button>
-              )}
+              )} */}
             </>
           ) : (
             <>
@@ -306,7 +361,7 @@ export default function ProjectDetailPage() {
       </Card>
 
       {/* Team Assignment - Admin View */}
-      {isAdmin && project.assignedTeam && (
+      {isAdmin && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -322,40 +377,37 @@ export default function ProjectDetailPage() {
             </div>
           </CardHeader>
           <CardBody>
-            {project.assignedTeam.performanceMarketer ||
-            project.assignedTeam.uiUxDesigner ||
-            project.assignedTeam.graphicDesigner ||
-            project.assignedTeam.developer ||
-            project.assignedTeam.tester ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.entries(project.assignedTeam).map(([role, member]) => (
-                  member && (
-                    <div key={role} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            {(() => {
+              const teamMembers = extractTeamMembers(project.assignedTeam);
+              return teamMembers.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {teamMembers.map((member) => (
+                    <div key={member._id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
-                        {member.name?.charAt(0).toUpperCase()}
+                        {member.name?.charAt(0).toUpperCase() || '?'}
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{member.name}</p>
-                        <p className="text-sm text-gray-500">{ROLE_LABELS[role]}</p>
+                        <p className="text-sm text-gray-500">{member.roleLabel}</p>
                       </div>
                     </div>
-                  )
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                <p className="text-gray-500">No team members assigned yet</p>
-                <Button
-                  variant="secondary"
-                  className="mt-4"
-                  onClick={() => navigate(`/projects/${id}/assign-team`)}
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Assign Team
-                </Button>
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-500">No team members assigned yet</p>
+                  <Button
+                    variant="secondary"
+                    className="mt-4"
+                    onClick={() => navigate(`/projects/${id}/assign-team`)}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Assign Team
+                  </Button>
+                </div>
+              );
+            })()}
           </CardBody>
         </Card>
       )}

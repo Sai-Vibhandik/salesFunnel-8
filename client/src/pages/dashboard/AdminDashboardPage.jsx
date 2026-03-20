@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { authService, projectService, notificationService, strategyService } from '@/services/api';
@@ -25,6 +26,14 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
+
+// Modal Portal Component - renders modals at document.body to avoid z-index issues
+function ModalPortal({ children }) {
+  return ReactDOM.createPortal(
+    children,
+    document.body
+  );
+}
 
 // Stat Card Component
 function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
@@ -189,179 +198,195 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
   if (!strategy) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">
-              Strategy Review: {strategy.project.projectName || strategy.project.businessName}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Completed by: {strategy.completedBy?.name || 'Unknown'} • {formatDate(strategy.project.strategyCompletedAt)}
-            </p>
+    <ModalPortal>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 z-[9998]"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Modal */}
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
+        aria-modal="true"
+        role="dialog"
+      >
+        <div
+          className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Strategy Review: {strategy.project.projectName || strategy.project.businessName}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Completed by: {strategy.completedBy?.name || 'Unknown'} • {formatDate(strategy.project.strategyCompletedAt)}
+              </p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+              <X size={20} className="text-gray-500" />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-            <X size={20} className="text-gray-500" />
-          </button>
-        </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-          {/* Stage Progress */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Stage Progress</h3>
-            <div className="grid grid-cols-6 gap-2">
-              {strategy.project.stageStatus?.map((stage, index) => (
-                <div key={stage.key} className="text-center">
-                  <div className={cn(
-                    'w-8 h-8 rounded-full mx-auto flex items-center justify-center text-sm font-medium',
-                    stage.isCompleted
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-400'
-                  )}>
-                    {stage.isCompleted ? <CheckCircle size={16} /> : index + 1}
+          <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            {/* Stage Progress */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Stage Progress</h3>
+              <div className="grid grid-cols-6 gap-2">
+                {strategy.project.stageStatus?.map((stage, index) => (
+                  <div key={stage.key} className="text-center">
+                    <div className={cn(
+                      'w-8 h-8 rounded-full mx-auto flex items-center justify-center text-sm font-medium',
+                      stage.isCompleted
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-400'
+                    )}>
+                      {stage.isCompleted ? <CheckCircle size={16} /> : index + 1}
+                    </div>
+                    <p className="text-xs mt-1 text-gray-500 truncate">{stage.name.split(' ')[0]}</p>
                   </div>
-                  <p className="text-xs mt-1 text-gray-500 truncate">{stage.name.split(' ')[0]}</p>
+                ))}
+              </div>
+            </div>
+
+            {/* Market Research Summary */}
+            {strategy.stages.marketResearch?.data && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Market Research</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {strategy.stages.marketResearch.data.avatar && (
+                    <>
+                      <div>
+                        <span className="text-gray-500">Target Audience:</span>{' '}
+                        <span className="text-gray-900">
+                          {strategy.stages.marketResearch.data.avatar.ageRange}, {strategy.stages.marketResearch.data.avatar.profession}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Location:</span>{' '}
+                        <span className="text-gray-900">{strategy.stages.marketResearch.data.avatar.location}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
-              ))}
+                {strategy.stages.marketResearch.data.painPoints?.length > 0 && (
+                  <div className="mt-2">
+                    <span className="text-gray-500 text-sm">Pain Points:</span>{' '}
+                    <span className="text-gray-900 text-sm">{strategy.stages.marketResearch.data.painPoints.join(', ')}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Offer Engineering Summary */}
+            {strategy.stages.offerEngineering?.data && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Offer Engineering</h4>
+                <div className="text-sm text-gray-700">
+                  {strategy.stages.offerEngineering.data.headline && (
+                    <p><span className="text-gray-500">Headline:</span> {strategy.stages.offerEngineering.data.headline}</p>
+                  )}
+                  {strategy.stages.offerEngineering.data.mainOffer && (
+                    <p className="mt-1"><span className="text-gray-500">Main Offer:</span> {strategy.stages.offerEngineering.data.mainOffer}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Traffic Strategy Summary */}
+            {strategy.stages.trafficStrategy?.data && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Traffic Strategy</h4>
+                <div className="text-sm text-gray-700">
+                  {strategy.stages.trafficStrategy.data.channels && (
+                    <p>
+                      <span className="text-gray-500">Channels:</span>{' '}
+                      {Object.entries(strategy.stages.trafficStrategy.data.channels)
+                        .filter(([_, v]) => v?.enabled)
+                        .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
+                        .join(', ') || 'None selected'}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Landing Page Summary */}
+            {strategy.stages.landingPage?.data && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Landing Page</h4>
+                <div className="text-sm text-gray-700">
+                  {strategy.stages.landingPage.data.headline && (
+                    <p><span className="text-gray-500">Headline:</span> {strategy.stages.landingPage.data.headline}</p>
+                  )}
+                  {strategy.stages.landingPage.data.subheadline && (
+                    <p className="mt-1"><span className="text-gray-500">Subheadline:</span> {strategy.stages.landingPage.data.subheadline}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Creative Strategy Summary */}
+            {strategy.stages.creativeStrategy?.data && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">Creative Strategy</h4>
+                <div className="text-sm text-gray-700">
+                  {strategy.stages.creativeStrategy.data.adTypes?.length > 0 && (
+                    <p><span className="text-gray-500">Ad Types:</span> {strategy.stages.creativeStrategy.data.adTypes.map(at => at.typeName).join(', ')}</p>
+                  )}
+                  {strategy.stages.creativeStrategy.data.creativeBrief && (
+                    <p className="mt-1"><span className="text-gray-500">Brief:</span> {strategy.stages.creativeStrategy.data.creativeBrief.substring(0, 100)}...</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Team */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <h4 className="font-medium text-gray-900 mb-3">Assigned Team</h4>
+              <div className="flex flex-wrap gap-3">
+                {strategy.project.assignedTeam?.performanceMarketer && (
+                  <Badge className="bg-blue-100 text-blue-700">
+                    PM: {strategy.project.assignedTeam.performanceMarketer.name}
+                  </Badge>
+                )}
+                {strategy.project.assignedTeam?.uiUxDesigner && (
+                  <Badge className="bg-purple-100 text-purple-700">
+                    UI/UX: {strategy.project.assignedTeam.uiUxDesigner.name}
+                  </Badge>
+                )}
+                {strategy.project.assignedTeam?.graphicDesigner && (
+                  <Badge className="bg-pink-100 text-pink-700">
+                    Design: {strategy.project.assignedTeam.graphicDesigner.name}
+                  </Badge>
+                )}
+                {strategy.project.assignedTeam?.developer && (
+                  <Badge className="bg-green-100 text-green-700">
+                    Dev: {strategy.project.assignedTeam.developer.name}
+                  </Badge>
+                )}
+                {strategy.project.assignedTeam?.tester && (
+                  <Badge className="bg-orange-100 text-orange-700">
+                    QA: {strategy.project.assignedTeam.tester.name}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Market Research Summary */}
-          {strategy.stages.marketResearch?.data && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Market Research</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {strategy.stages.marketResearch.data.avatar && (
-                  <>
-                    <div>
-                      <span className="text-gray-500">Target Audience:</span>{' '}
-                      <span className="text-gray-900">
-                        {strategy.stages.marketResearch.data.avatar.ageRange}, {strategy.stages.marketResearch.data.avatar.profession}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Location:</span>{' '}
-                      <span className="text-gray-900">{strategy.stages.marketResearch.data.avatar.location}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              {strategy.stages.marketResearch.data.painPoints?.length > 0 && (
-                <div className="mt-2">
-                  <span className="text-gray-500 text-sm">Pain Points:</span>{' '}
-                  <span className="text-gray-900 text-sm">{strategy.stages.marketResearch.data.painPoints.join(', ')}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Offer Engineering Summary */}
-          {strategy.stages.offerEngineering?.data && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Offer Engineering</h4>
-              <div className="text-sm text-gray-700">
-                {strategy.stages.offerEngineering.data.headline && (
-                  <p><span className="text-gray-500">Headline:</span> {strategy.stages.offerEngineering.data.headline}</p>
-                )}
-                {strategy.stages.offerEngineering.data.mainOffer && (
-                  <p className="mt-1"><span className="text-gray-500">Main Offer:</span> {strategy.stages.offerEngineering.data.mainOffer}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Traffic Strategy Summary */}
-          {strategy.stages.trafficStrategy?.data && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Traffic Strategy</h4>
-              <div className="text-sm text-gray-700">
-                {strategy.stages.trafficStrategy.data.channels && (
-                  <p>
-                    <span className="text-gray-500">Channels:</span>{' '}
-                    {Object.entries(strategy.stages.trafficStrategy.data.channels)
-                      .filter(([_, v]) => v?.enabled)
-                      .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
-                      .join(', ') || 'None selected'}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Landing Page Summary */}
-          {strategy.stages.landingPage?.data && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Landing Page</h4>
-              <div className="text-sm text-gray-700">
-                {strategy.stages.landingPage.data.headline && (
-                  <p><span className="text-gray-500">Headline:</span> {strategy.stages.landingPage.data.headline}</p>
-                )}
-                {strategy.stages.landingPage.data.subheadline && (
-                  <p className="mt-1"><span className="text-gray-500">Subheadline:</span> {strategy.stages.landingPage.data.subheadline}</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Creative Strategy Summary */}
-          {strategy.stages.creativeStrategy?.data && (
-            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900 mb-2">Creative Strategy</h4>
-              <div className="text-sm text-gray-700">
-                {strategy.stages.creativeStrategy.data.adTypes?.length > 0 && (
-                  <p><span className="text-gray-500">Ad Types:</span> {strategy.stages.creativeStrategy.data.adTypes.map(at => at.typeName).join(', ')}</p>
-                )}
-                {strategy.stages.creativeStrategy.data.creativeBrief && (
-                  <p className="mt-1"><span className="text-gray-500">Brief:</span> {strategy.stages.creativeStrategy.data.creativeBrief.substring(0, 100)}...</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Team */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <h4 className="font-medium text-gray-900 mb-3">Assigned Team</h4>
-            <div className="flex flex-wrap gap-3">
-              {strategy.project.assignedTeam?.performanceMarketer && (
-                <Badge className="bg-blue-100 text-blue-700">
-                  PM: {strategy.project.assignedTeam.performanceMarketer.name}
-                </Badge>
-              )}
-              {strategy.project.assignedTeam?.uiUxDesigner && (
-                <Badge className="bg-purple-100 text-purple-700">
-                  UI/UX: {strategy.project.assignedTeam.uiUxDesigner.name}
-                </Badge>
-              )}
-              {strategy.project.assignedTeam?.graphicDesigner && (
-                <Badge className="bg-pink-100 text-pink-700">
-                  Design: {strategy.project.assignedTeam.graphicDesigner.name}
-                </Badge>
-              )}
-              {strategy.project.assignedTeam?.developer && (
-                <Badge className="bg-green-100 text-green-700">
-                  Dev: {strategy.project.assignedTeam.developer.name}
-                </Badge>
-              )}
-              {strategy.project.assignedTeam?.tester && (
-                <Badge className="bg-orange-100 text-orange-700">
-                  QA: {strategy.project.assignedTeam.tester.name}
-                </Badge>
-              )}
-            </div>
+          <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+            <Button onClick={handleReview} loading={reviewing}>
+              <CheckSquare size={16} className="mr-2" />
+              Mark as Reviewed
+            </Button>
           </div>
-        </div>
-
-        <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-          <Button onClick={handleReview} loading={reviewing}>
-            <CheckSquare size={16} className="mr-2" />
-            Mark as Reviewed
-          </Button>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 

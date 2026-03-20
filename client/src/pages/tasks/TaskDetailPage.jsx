@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardBody, CardHeader, Button, Spinner, Badge } from '@/components/ui';
@@ -68,6 +68,7 @@ const CREATIVE_TYPE_LABELS = {
 export default function TaskDetailPage() {
   const { taskId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,19 @@ export default function TaskDetailPage() {
   const [rejectionNote, setRejectionNote] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  // Get the back URL from location state, default based on user role
+  const getBackUrl = () => {
+    // If we have a 'from' state, use it
+    if (location.state?.from) {
+      return location.state.from;
+    }
+    // Default: Performance marketers go to /assets, others to /tasks
+    if (user?.role === 'performance_marketer' || user?.role === 'admin') {
+      return '/assets';
+    }
+    return '/tasks';
+  };
 
   // Submission form state - different fields for different task types
   const [submissionForm, setSubmissionForm] = useState({
@@ -160,7 +174,7 @@ export default function TaskDetailPage() {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to load task');
-      navigate('/tasks');
+      navigate(getBackUrl());
     } finally {
       setLoading(false);
     }
@@ -466,8 +480,8 @@ export default function TaskDetailPage() {
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 mx-auto text-gray-300 mb-4" />
         <p className="text-gray-500">Task not found</p>
-        <Button variant="secondary" onClick={() => navigate('/tasks')} className="mt-4">
-          Back to Tasks
+        <Button variant="secondary" onClick={() => navigate(getBackUrl())} className="mt-4">
+          Back
         </Button>
       </div>
     );
@@ -480,7 +494,7 @@ export default function TaskDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/tasks')}>
+          <Button variant="ghost" onClick={() => navigate(getBackUrl())}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </Button>

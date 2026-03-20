@@ -58,6 +58,7 @@ export const authService = {
   createTeamMember: (data) => api.post('/auth/create-user', data),
   updateTeamMember: (id, data) => api.put(`/auth/users/${id}`, data),
   deleteTeamMember: (id) => api.delete(`/auth/users/${id}`),
+  permanentDeleteTeamMember: (id) => api.delete(`/auth/users/${id}/permanent`),
 };
 
 // Project service

@@ -1871,38 +1871,28 @@ exports.getPMProjectsWithAssets = async (req, res, next) => {
       .select('_id projectName businessName industry status isActive')
       .sort({ updatedAt: -1 });
 
-    // Final approved statuses (fully approved assets)
+    // Status categories
+    const pendingStatuses = ['todo', 'in_progress', 'content_pending', 'design_pending', 'development_pending'];
+    const submittedStatuses = ['content_submitted', 'design_submitted', 'development_submitted', 'submitted'];
+    const approvedStatuses = ['approved_by_tester', 'content_approved', 'design_approved', 'development_approved', 'content_final_approved'];
     const finalApprovedStatuses = ['final_approved'];
-
-    // All approved statuses (approved by tester, marketer, or fully approved)
-    const allApprovedStatuses = [
-      'approved_by_tester',
-      'content_approved',
-      'design_approved',
-      'development_approved',
-      'final_approved',
-      'content_final_approved'
-    ];
+    const rejectedStatuses = ['rejected', 'content_rejected', 'design_rejected'];
 
     // Get assets for each project
     const projectsWithAssets = await Promise.all(
       projects.map(async (project) => {
-        // Get all approved assets for this project
-        const allAssets = await Task.find({
-          projectId: project._id,
-          status: { $in: allApprovedStatuses }
-        })
+        // Get ALL tasks for this project
+        const allTasks = await Task.find({ projectId: project._id })
           .populate('assignedTo', 'name email')
-          .populate('testerReviewedBy', 'name email')
-          .populate('marketerApprovedBy', 'name email');
+          .populate('assignedRole')
+          .sort({ createdAt: -1 });
 
-        // Get final approved assets
-        const finalApprovedAssets = await Task.find({
-          projectId: project._id,
-          status: { $in: finalApprovedStatuses }
-        })
-          .populate('assignedTo', 'name email')
-          .populate('marketerApprovedBy', 'name email');
+        // Categorize by status
+        const pendingTasks = allTasks.filter(t => pendingStatuses.includes(t.status));
+        const submittedTasks = allTasks.filter(t => submittedStatuses.includes(t.status));
+        const approvedTasks = allTasks.filter(t => approvedStatuses.includes(t.status));
+        const finalApprovedTasks = allTasks.filter(t => finalApprovedStatuses.includes(t.status));
+        const rejectedTasks = allTasks.filter(t => rejectedStatuses.includes(t.status));
 
         // Categorize assets by type
         const categorizeByType = (tasks) => {
@@ -1927,17 +1917,25 @@ exports.getPMProjectsWithAssets = async (req, res, next) => {
           industry: project.industry,
           status: project.status,
           isActive: project.isActive,
-          assetStats: {
-            total: allAssets.length,
-            finalApproved: finalApprovedAssets.length
+          taskStats: {
+            total: allTasks.length,
+            pending: pendingTasks.length,
+            submitted: submittedTasks.length,
+            approved: approvedTasks.length,
+            finalApproved: finalApprovedTasks.length,
+            rejected: rejectedTasks.length
           },
-          assets: {
-            all: allAssets,
-            finalApproved: finalApprovedAssets
+          tasks: {
+            all: allTasks,
+            pending: pendingTasks,
+            submitted: submittedTasks,
+            approved: approvedTasks,
+            finalApproved: finalApprovedTasks,
+            rejected: rejectedTasks
           },
-          assetsByType: {
-            all: categorizeByType(allAssets),
-            finalApproved: categorizeByType(finalApprovedAssets)
+          tasksByType: {
+            all: categorizeByType(allTasks),
+            finalApproved: categorizeByType(finalApprovedTasks)
           }
         };
       })
@@ -1994,37 +1992,26 @@ exports.getPMProjectAssets = async (req, res, next) => {
       }
     }
 
-    // Final approved statuses
+    // Status categories
+    const pendingStatuses = ['todo', 'in_progress', 'content_pending', 'design_pending', 'development_pending'];
+    const submittedStatuses = ['content_submitted', 'design_submitted', 'development_submitted', 'submitted'];
+    const approvedStatuses = ['approved_by_tester', 'content_approved', 'design_approved', 'development_approved', 'content_final_approved'];
     const finalApprovedStatuses = ['final_approved'];
+    const rejectedStatuses = ['rejected', 'content_rejected', 'design_rejected'];
 
-    // All approved statuses
-    const allApprovedStatuses = [
-      'approved_by_tester',
-      'content_approved',
-      'design_approved',
-      'development_approved',
-      'final_approved',
-      'content_final_approved'
-    ];
-
-    // Get all approved assets
-    const allAssets = await Task.find({
-      projectId,
-      status: { $in: allApprovedStatuses }
-    })
+    // Get ALL tasks for this project
+    const allTasks = await Task.find({ projectId })
       .populate('assignedTo', 'name email')
       .populate('testerReviewedBy', 'name email')
       .populate('marketerApprovedBy', 'name email')
-      .sort({ marketerApprovedAt: -1, testerReviewedAt: -1, updatedAt: -1 });
+      .sort({ createdAt: -1 });
 
-    // Get final approved assets
-    const finalApprovedAssets = await Task.find({
-      projectId,
-      status: { $in: finalApprovedStatuses }
-    })
-      .populate('assignedTo', 'name email')
-      .populate('marketerApprovedBy', 'name email')
-      .sort({ marketerApprovedAt: -1 });
+    // Categorize by status
+    const pendingTasks = allTasks.filter(t => pendingStatuses.includes(t.status));
+    const submittedTasks = allTasks.filter(t => submittedStatuses.includes(t.status));
+    const approvedTasks = allTasks.filter(t => approvedStatuses.includes(t.status));
+    const finalApprovedTasks = allTasks.filter(t => finalApprovedStatuses.includes(t.status));
+    const rejectedTasks = allTasks.filter(t => rejectedStatuses.includes(t.status));
 
     // Categorize by type
     const categorizeByType = (tasks) => {
@@ -2052,22 +2039,30 @@ exports.getPMProjectAssets = async (req, res, next) => {
           industry: project.industry
         },
         stats: {
-          total: allAssets.length,
-          finalApproved: finalApprovedAssets.length,
+          total: allTasks.length,
+          pending: pendingTasks.length,
+          submitted: submittedTasks.length,
+          approved: approvedTasks.length,
+          finalApproved: finalApprovedTasks.length,
+          rejected: rejectedTasks.length,
           byType: {
-            imageCreatives: categorizeByType(allAssets).imageCreatives.length,
-            videoCreatives: categorizeByType(allAssets).videoCreatives.length,
-            uiuxDesigns: categorizeByType(allAssets).uiuxDesigns.length,
-            landingPages: categorizeByType(allAssets).landingPages.length
+            imageCreatives: categorizeByType(allTasks).imageCreatives.length,
+            videoCreatives: categorizeByType(allTasks).videoCreatives.length,
+            uiuxDesigns: categorizeByType(allTasks).uiuxDesigns.length,
+            landingPages: categorizeByType(allTasks).landingPages.length
           }
         },
-        assets: {
-          all: allAssets,
-          finalApproved: finalApprovedAssets
+        tasks: {
+          all: allTasks,
+          pending: pendingTasks,
+          submitted: submittedTasks,
+          approved: approvedTasks,
+          finalApproved: finalApprovedTasks,
+          rejected: rejectedTasks
         },
-        assetsByType: {
-          all: categorizeByType(allAssets),
-          finalApproved: categorizeByType(finalApprovedAssets)
+        tasksByType: {
+          all: categorizeByType(allTasks),
+          finalApproved: categorizeByType(finalApprovedTasks)
         }
       }
     });

@@ -264,8 +264,22 @@ function AppRoutes() {
           }
         />
 
-        {/* Tasks */}
-        <Route path="/tasks" element={<TasksPage />} />
+        {/* Tasks - Not accessible to Performance Marketers and Admins */}
+        <Route
+          path="/tasks"
+          element={
+            <ProtectedRoute>
+              {(() => {
+                const { user } = useAuth();
+                // Performance Marketers and Admins should not access "My Tasks"
+                if (user?.role === 'performance_marketer' || user?.role === 'admin') {
+                  return <Navigate to="/" replace />;
+                }
+                return <TasksPage />;
+              })()}
+            </ProtectedRoute>
+          }
+        />
         <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
 
         {/* Tester Review - Tester/Admin only */}

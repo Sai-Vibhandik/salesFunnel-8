@@ -493,6 +493,72 @@ exports.deleteTeamMember = async (req, res, next) => {
   }
 };
 
+// @desc    Permanently delete a team member
+// @route   DELETE /api/auth/users/:id/permanent
+// @access  Private (Admin only)
+exports.permanentDeleteTeamMember = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prevent admin from deleting themselves
+    if (id === req.user._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete your own account'
+      });
+    }
+
+    // Prevent deletion if user is currently assigned to active projects
+    const Project = require('../models/Project');
+    const assignedProjects = await Project.find({
+      $or: [
+        { 'assignedTeam.performanceMarketer': id },
+        { 'assignedTeam.contentCreator': id },
+        { 'assignedTeam.contentWriter': id },
+        { 'assignedTeam.uiUxDesigner': id },
+        { 'assignedTeam.graphicDesigner': id },
+        { 'assignedTeam.videoEditor': id },
+        { 'assignedTeam.developer': id },
+        { 'assignedTeam.tester': id },
+        { 'assignedTeam.performanceMarketers': id },
+        { 'assignedTeam.contentWriters': id },
+        { 'assignedTeam.uiUxDesigners': id },
+        { 'assignedTeam.graphicDesigners': id },
+        { 'assignedTeam.videoEditors': id },
+        { 'assignedTeam.developers': id },
+        { 'assignedTeam.testers': id }
+      ],
+      isActive: true
+    });
+
+    if (assignedProjects.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot permanently delete user. They are assigned to ${assignedProjects.length} active project(s). Remove them from projects first.`
+      });
+    }
+
+    // Permanent delete
+    await User.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'User permanently deleted'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get team members by role
 // @route   GET /api/auth/team/by-role
 // @access  Private

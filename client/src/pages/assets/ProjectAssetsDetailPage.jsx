@@ -18,6 +18,10 @@ import {
   MessageSquare,
   AlertCircle,
   Eye,
+  CheckCircle,
+  XCircle,
+  ClipboardList,
+  Clock,
 } from 'lucide-react';
 
 const TASK_TYPE_CONFIG = {
@@ -29,11 +33,35 @@ const TASK_TYPE_CONFIG = {
 };
 
 const STATUS_CONFIG = {
-  final_approved: { label: 'Final Approved', color: 'bg-green-100 text-green-800' },
-  design_approved: { label: 'Design Approved', color: 'bg-blue-100 text-blue-800' },
-  development_approved: { label: 'Development Approved', color: 'bg-blue-100 text-blue-800' },
-  approved_by_tester: { label: 'Tester Approved', color: 'bg-blue-100 text-blue-800' },
-  content_final_approved: { label: 'Content Approved', color: 'bg-green-100 text-green-800' },
+  // Pending statuses
+  todo: { label: 'To Do', color: 'bg-gray-100 text-gray-800', icon: ClipboardList },
+  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-800', icon: Clock },
+  content_pending: { label: 'Content Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+  design_pending: { label: 'Design Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+  development_pending: { label: 'Dev Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+  // Submitted statuses
+  content_submitted: { label: 'Content Submitted', color: 'bg-indigo-100 text-indigo-800', icon: Send },
+  design_submitted: { label: 'Design Submitted', color: 'bg-indigo-100 text-indigo-800', icon: Send },
+  development_submitted: { label: 'Dev Submitted', color: 'bg-indigo-100 text-indigo-800', icon: Send },
+  submitted: { label: 'Submitted', color: 'bg-indigo-100 text-indigo-800', icon: Send },
+  // Approved statuses
+  approved_by_tester: { label: 'Tester Approved', color: 'bg-purple-100 text-purple-800', icon: CheckCircle },
+  content_approved: { label: 'Content Approved', color: 'bg-purple-100 text-purple-800', icon: CheckCircle },
+  content_final_approved: { label: 'Content Final', color: 'bg-purple-100 text-purple-800', icon: CheckCircle },
+  design_approved: { label: 'Design Approved', color: 'bg-purple-100 text-purple-800', icon: CheckCircle },
+  development_approved: { label: 'Dev Approved', color: 'bg-purple-100 text-purple-800', icon: CheckCircle },
+  // Final approved
+  final_approved: { label: 'Final Approved', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+  // Rejected statuses
+  content_rejected: { label: 'Content Rejected', color: 'bg-red-100 text-red-800', icon: XCircle },
+  design_rejected: { label: 'Design Rejected', color: 'bg-red-100 text-red-800', icon: XCircle },
+  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800', icon: XCircle },
+};
+
+const STATUS_CATEGORIES = {
+  all: { label: 'All Tasks', color: 'bg-gray-100 text-gray-800' },
+  finalApproved: { label: 'Final Approved', color: 'bg-green-100 text-green-800' },
+  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800' },
 };
 
 export default function ProjectAssetsDetailPage() {
@@ -41,7 +69,7 @@ export default function ProjectAssetsDetailPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all' | 'finalApproved'
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'submitted' | 'approved' | 'finalApproved' | 'rejected'
   const [typeFilter, setTypeFilter] = useState('all'); // 'all' | 'imageCreatives' | 'videoCreatives' | 'uiuxDesigns' | 'landingPages'
 
   useEffect(() => {
@@ -61,27 +89,54 @@ export default function ProjectAssetsDetailPage() {
     }
   };
 
-  const getFilteredAssets = () => {
+  const getFilteredTasks = () => {
     if (!projectData) return [];
 
-    const assetSet = filter === 'finalApproved' ? 'finalApproved' : 'all';
-    const assets = projectData.assetsByType?.[assetSet] || projectData.assets?.[assetSet] || [];
-
-    if (typeFilter === 'all') {
-      return [
-        ...(assets.imageCreatives || []),
-        ...(assets.videoCreatives || []),
-        ...(assets.uiuxDesigns || []),
-        ...(assets.landingPages || []),
-      ];
+    // Get tasks by status category
+    let tasksByStatus = [];
+    switch (statusFilter) {
+      case 'pending':
+        tasksByStatus = projectData.tasks?.pending || [];
+        break;
+      case 'submitted':
+        tasksByStatus = projectData.tasks?.submitted || [];
+        break;
+      case 'approved':
+        tasksByStatus = projectData.tasks?.approved || [];
+        break;
+      case 'finalApproved':
+        tasksByStatus = projectData.tasks?.finalApproved || [];
+        break;
+      case 'rejected':
+        tasksByStatus = projectData.tasks?.rejected || [];
+        break;
+      case 'all':
+      default:
+        tasksByStatus = projectData.tasks?.all || [];
     }
 
-    return assets[typeFilter] || [];
+    // Filter by type
+    if (typeFilter === 'all') {
+      return tasksByStatus;
+    }
+
+    const typeFilters = {
+      imageCreatives: (t) =>
+        t.taskType === 'graphic_design' &&
+        (!t.creativeOutputType || ['image_creative', 'static_ad', 'carousel_creative'].includes(t.creativeOutputType)),
+      videoCreatives: (t) =>
+        t.taskType === 'video_editing' ||
+        (t.taskType === 'graphic_design' && ['video_creative', 'reel', 'ugc_content', 'testimonial_content', 'demo_video'].includes(t.creativeOutputType)),
+      uiuxDesigns: (t) => t.taskType === 'landing_page_design',
+      landingPages: (t) => t.taskType === 'landing_page_development',
+    };
+
+    return tasksByStatus.filter(typeFilters[typeFilter] || (() => true));
   };
 
-  const renderAssetCard = (task) => {
+  const renderTaskCard = (task) => {
     const typeConfig = TASK_TYPE_CONFIG[task.taskType] || { label: task.taskType, icon: FileCheck, color: 'bg-gray-100 text-gray-800' };
-    const statusConfig = STATUS_CONFIG[task.status] || { label: task.status, color: 'bg-gray-100 text-gray-800' };
+    const statusConfig = STATUS_CONFIG[task.status] || { label: task.status, color: 'bg-gray-100 text-gray-800', icon: AlertCircle };
     const Icon = typeConfig.icon;
 
     return (
@@ -94,7 +149,9 @@ export default function ProjectAssetsDetailPage() {
                   <Icon className="w-3 h-3 mr-1" />
                   {typeConfig.label}
                 </Badge>
-                <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+                <Badge className={statusConfig.color}>
+                  {statusConfig.label}
+                </Badge>
               </div>
 
               <h3 className="text-lg font-semibold text-gray-900 mb-1">{task.taskTitle}</h3>
@@ -108,6 +165,14 @@ export default function ProjectAssetsDetailPage() {
                   {task.strategyContext.platform && (
                     <span className="mr-3">Platform: {task.strategyContext.platform}</span>
                   )}
+                </div>
+              )}
+
+              {/* Assigned To */}
+              {task.assignedTo && (
+                <div className="text-sm text-gray-500 mb-2">
+                  <User className="w-4 h-4 inline mr-1" />
+                  Assigned: {task.assignedTo.name || 'Unknown'}
                 </div>
               )}
 
@@ -203,17 +268,7 @@ export default function ProjectAssetsDetailPage() {
                 </div>
               )}
 
-              {task.devNotes && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="text-sm font-medium text-blue-800 mb-1 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
-                    Developer Notes
-                  </h4>
-                  <p className="text-sm text-gray-700">{task.devNotes}</p>
-                </div>
-              )}
-
-              {/* Approval Info */}
+              {/* Timestamps */}
               <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
                 {task.marketerApprovedBy && (
                   <div className="flex items-center gap-1">
@@ -227,10 +282,10 @@ export default function ProjectAssetsDetailPage() {
                     <span>{new Date(task.marketerApprovedAt).toLocaleDateString()}</span>
                   </div>
                 )}
-                {task.testerReviewedBy && !task.marketerApprovedBy && (
+                {task.createdAt && (
                   <div className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span>Reviewed by: {task.testerReviewedBy.name || 'Tester'}</span>
+                    <Calendar className="w-4 h-4" />
+                    <span>Created: {new Date(task.createdAt).toLocaleDateString()}</span>
                   </div>
                 )}
               </div>
@@ -241,7 +296,7 @@ export default function ProjectAssetsDetailPage() {
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={() => navigate(`/tasks/${task._id}`)}
+                onClick={() => navigate(`/tasks/${task._id}`, { state: { from: `/assets/project/${projectId}` } })}
               >
                 <Eye className="w-4 h-4 mr-1" />
                 View Details
@@ -278,8 +333,8 @@ export default function ProjectAssetsDetailPage() {
     );
   }
 
-  const { project, stats, assetsByType } = projectData;
-  const filteredAssets = getFilteredAssets();
+  const { project, stats } = projectData;
+  const filteredTasks = getFilteredTasks();
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -304,41 +359,29 @@ export default function ProjectAssetsDetailPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardBody className="p-4 text-center">
-            <p className="text-sm text-gray-500">Total Assets</p>
+            <p className="text-sm text-gray-500 mb-1">Total Tasks</p>
             <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody className="p-4 text-center">
-            <p className="text-sm text-gray-500">Approved</p>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            </div>
+            <p className="text-sm text-gray-500 mb-1">Final Approved</p>
             <p className="text-2xl font-bold text-green-600">{stats?.finalApproved || 0}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody className="p-4 text-center">
-            <p className="text-sm text-gray-500">Image Creatives</p>
-            <p className="text-2xl font-bold text-blue-600">{stats?.byType?.imageCreatives || 0}</p>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="p-4 text-center">
-            <p className="text-sm text-gray-500">Video Creatives</p>
-            <p className="text-2xl font-bold text-purple-600">{stats?.byType?.videoCreatives || 0}</p>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="p-4 text-center">
-            <p className="text-sm text-gray-500">UI/UX Designs</p>
-            <p className="text-2xl font-bold text-orange-600">{stats?.byType?.uiuxDesigns || 0}</p>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="p-4 text-center">
-            <p className="text-sm text-gray-500">Landing Pages</p>
-            <p className="text-2xl font-bold text-green-600">{stats?.byType?.landingPages || 0}</p>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <XCircle className="w-4 h-4 text-red-500" />
+            </div>
+            <p className="text-sm text-gray-500 mb-1">Rejected</p>
+            <p className="text-2xl font-bold text-red-600">{stats?.rejected || 0}</p>
           </CardBody>
         </Card>
       </div>
@@ -350,21 +393,17 @@ export default function ProjectAssetsDetailPage() {
             {/* Status Filter */}
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700">Status:</span>
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant={filter === 'all' ? 'primary' : 'secondary'}
-                  onClick={() => setFilter('all')}
-                >
-                  All Assets
-                </Button>
-                <Button
-                  size="sm"
-                  variant={filter === 'finalApproved' ? 'primary' : 'secondary'}
-                  onClick={() => setFilter('finalApproved')}
-                >
-                  Approved
-                </Button>
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(STATUS_CATEGORIES).map(([key, config]) => (
+                  <Button
+                    key={key}
+                    size="sm"
+                    variant={statusFilter === key ? 'primary' : 'secondary'}
+                    onClick={() => setStatusFilter(key)}
+                  >
+                    {config.label}
+                  </Button>
+                ))}
               </div>
             </div>
 
@@ -417,12 +456,12 @@ export default function ProjectAssetsDetailPage() {
         </CardBody>
       </Card>
 
-      {/* Assets List */}
-      {filteredAssets.length === 0 ? (
+      {/* Tasks List */}
+      {filteredTasks.length === 0 ? (
         <Card>
           <CardBody className="text-center py-12">
             <FileCheck className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">No assets found matching your filters</p>
+            <p className="text-gray-500">No tasks found matching your filters</p>
             <p className="text-sm text-gray-400 mt-2">
               Try adjusting your filters or check back later
             </p>
@@ -430,7 +469,7 @@ export default function ProjectAssetsDetailPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredAssets.map(renderAssetCard)}
+          {filteredTasks.map(renderTaskCard)}
         </div>
       )}
     </div>

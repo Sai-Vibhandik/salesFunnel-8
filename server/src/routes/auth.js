@@ -11,6 +11,7 @@ const {
   createTeamMember,
   updateTeamMember,
   deleteTeamMember,
+  permanentDeleteTeamMember,
   getTeamByRole,
   debugTestDb
 } = require('../controllers/authController');
@@ -32,6 +33,7 @@ router.get('/team/by-role', protect, getTeamByRole);
 router.post('/create-user', protect, authorize('admin'), createTeamMember);
 router.put('/users/:id', protect, authorize('admin'), updateTeamMember);
 router.delete('/users/:id', protect, authorize('admin'), deleteTeamMember);
+router.delete('/users/:id/permanent', protect, authorize('admin'), permanentDeleteTeamMember);
 
 // Debug routes (Admin only - remove in production)
 router.get('/debug/test-db', protect, authorize('admin'), debugTestDb);

@@ -1,21 +1,16 @@
 import { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { toast } from 'sonner';
 import { authService, projectService } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
-import { Card, CardBody, Spinner, Button, Badge, Modal, Input } from '@/components/ui';
+import { Card, CardBody, Spinner, Button, Badge, Input } from '@/components/ui';
 import {
   Users,
   UserPlus,
   Search,
-  MoreVertical,
   Edit,
   Trash2,
-  Mail,
   X,
-  Save,
-  User,
-  Briefcase,
-  Clock,
   AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -39,7 +34,7 @@ const AVAILABILITY_OPTIONS = [
 ];
 
 // Team Member Card Component
-function TeamMemberRow({ member, onEdit, onDelete }) {
+function TeamMemberRow({ member, onEdit, onDelete, onActivate }) {
   const roleLabels = {
     admin: 'Admin',
     performance_marketer: 'Performance Marketer',
@@ -69,11 +64,19 @@ function TeamMemberRow({ member, onEdit, onDelete }) {
   };
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+    <tr className={cn(
+      'border-b border-gray-100 transition-colors',
+      member.isActive ? 'hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'
+    )}>
       <td className="py-4 px-4">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
+            <div className={cn(
+              'w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold',
+              member.isActive
+                ? 'bg-gradient-to-br from-primary-400 to-primary-600'
+                : 'bg-gray-400'
+            )}>
               {member.name?.charAt(0).toUpperCase()}
             </div>
             <div className={cn(
@@ -82,7 +85,13 @@ function TeamMemberRow({ member, onEdit, onDelete }) {
             )} />
           </div>
           <div>
-            <p className="font-medium text-gray-900">{member.name}</p>
+            <p className={cn(
+              'font-medium',
+              member.isActive ? 'text-gray-900' : 'text-gray-500'
+            )}>
+              {member.name}
+              {!member.isActive && <span className="ml-2 text-xs text-gray-400">(Deactivated)</span>}
+            </p>
             <p className="text-sm text-gray-500">{member.email}</p>
           </div>
         </div>
@@ -108,21 +117,52 @@ function TeamMemberRow({ member, onEdit, onDelete }) {
       </td>
       <td className="py-4 px-4">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onEdit(member)}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <Edit size={16} />
-          </button>
-          <button
-            onClick={() => onDelete(member)}
-            className="p-1.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
-          >
-            <Trash2 size={16} />
-          </button>
+          {member.isActive ? (
+            <>
+              <button
+                onClick={() => onEdit(member)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                title="Edit"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                onClick={() => onDelete(member)}
+                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+                title="Deactivate"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => onActivate(member)}
+                className="px-3 py-1 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors text-sm font-medium"
+                title="Activate"
+              >
+                Activate
+              </button>
+              <button
+                onClick={() => onDelete(member)}
+                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+                title="Delete Permanently"
+              >
+                <Trash2 size={16} />
+              </button>
+            </>
+          )}
         </div>
       </td>
     </tr>
+  );
+}
+
+// Modal rendered via portal to avoid stacking context issues
+function ModalPortal({ children }) {
+  return ReactDOM.createPortal(
+    children,
+    document.body
   );
 }
 
@@ -144,6 +184,7 @@ function TeamMemberModal({ isOpen, onClose, member, onSave }) {
 
   // Fetch projects for assignment dropdown
   useEffect(() => {
+    if (!isOpen) return;
     const fetchProjects = async () => {
       try {
         const response = await projectService.getProjects({ limit: 100 });
@@ -153,34 +194,36 @@ function TeamMemberModal({ isOpen, onClose, member, onSave }) {
       }
     };
     fetchProjects();
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
-    if (member) {
-      setFormData({
-        name: member.name || '',
-        email: member.email || '',
-        password: '',
-        role: member.role || 'performance_marketer',
-        specialization: member.specialization || '',
-        availability: member.availability || 'available',
-        projectId: '',
-        projectRole: '',
-      });
-    } else {
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        role: 'performance_marketer',
-        specialization: '',
-        availability: 'available',
-        projectId: '',
-        projectRole: '',
-      });
+    if (isOpen) {
+      setError('');
+      if (member) {
+        setFormData({
+          name: member.name || '',
+          email: member.email || '',
+          password: '',
+          role: member.role || 'performance_marketer',
+          specialization: member.specialization || '',
+          availability: member.availability || 'available',
+          projectId: '',
+          projectRole: '',
+        });
+      } else {
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          role: 'performance_marketer',
+          specialization: '',
+          availability: 'available',
+          projectId: '',
+          projectRole: '',
+        });
+      }
     }
-    setError('');
-  }, [member]);
+  }, [isOpen, member]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -221,208 +264,294 @@ function TeamMemberModal({ isOpen, onClose, member, onSave }) {
     }
   };
 
-  // Map role to project assignment field
-  const roleToProjectRole = {
-    'performance_marketer': 'performance_marketer',
-    'ui_ux_designer': 'ui_ux_designer',
-    'graphic_designer': 'graphic_designer',
-    'developer': 'developer',
-    'tester': 'tester',
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {member ? 'Edit Team Member' : 'Add Team Member'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Error message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-red-700">
-              <AlertCircle size={18} />
-              <span className="text-sm">{error}</span>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter name"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="Enter email"
-              required
-            />
-          </div>
-
-          {!member && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password * (min 6 characters)</label>
-              <Input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Enter password"
-                required={!member}
-                minLength={6}
-              />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
-            <select
-              value={formData.role}
-              onChange={(e) => {
-                const newRole = e.target.value;
-                setFormData({
-                  ...formData,
-                  role: newRole,
-                  projectRole: roleToProjectRole[newRole] || '',
-                });
-              }}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+    <ModalPortal>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 z-[9998]"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Modal */}
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby="modal-title"
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
+            <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
+              {member ? 'Edit Team Member' : 'Add Team Member'}
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
             >
-              {ROLE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <X size={20} />
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
-            <Input
-              value={formData.specialization}
-              onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
-              placeholder="e.g., Facebook Ads, React Development"
-            />
-          </div>
+          {/* Scrollable body */}
+          <div className="overflow-y-auto flex-1">
+            <form id="team-member-form" onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Error message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-red-700">
+                  <AlertCircle size={18} className="flex-shrink-0" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Availability</label>
-            <select
-              value={formData.availability}
-              onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-              className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {AVAILABILITY_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter name"
+                  required
+                />
+              </div>
 
-          {/* Project Assignment (only for new members) */}
-          {!member && (
-            <div className="border-t border-gray-100 pt-4 mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assign to Project (Optional)
-              </label>
-              <div className="space-y-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="Enter email"
+                  required
+                />
+              </div>
+
+              {!member && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password * (min 6 characters)</label>
+                  <Input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Enter password"
+                    required={!member}
+                    minLength={6}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
                 <select
-                  value={formData.projectId}
-                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="">Select a project...</option>
-                  {projects.map((project) => (
-                    <option key={project._id} value={project._id}>
-                      {project.projectName || project.businessName}
+                  {ROLE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>
-                {formData.projectId && (
-                  <p className="text-xs text-gray-500">
-                    User will be assigned as {ROLE_OPTIONS.find(r => r.value === formData.role)?.label} to the selected project
-                  </p>
-                )}
               </div>
-            </div>
-          )}
 
-          <div className="flex justify-end gap-3 pt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                <Input
+                  value={formData.specialization}
+                  onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                  placeholder="e.g., Facebook Ads, React Development"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Availability</label>
+                <select
+                  value={formData.availability}
+                  onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  {AVAILABILITY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Project Assignment (only for new members) */}
+              {!member && (
+                <div className="border-t border-gray-100 pt-4 mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Assign to Project (Optional)
+                  </label>
+                  <div className="space-y-2">
+                    <select
+                      value={formData.projectId}
+                      onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="">Select a project...</option>
+                      {projects.map((project) => (
+                        <option key={project._id} value={project._id}>
+                          {project.projectName || project.businessName}
+                        </option>
+                      ))}
+                    </select>
+                    {formData.projectId && (
+                      <p className="text-xs text-gray-500">
+                        User will be assigned as {ROLE_OPTIONS.find(r => r.value === formData.role)?.label} to the selected project
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-3 p-6 border-t border-gray-100 flex-shrink-0">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              form="team-member-form"
+              disabled={loading}
+            >
               {loading ? 'Saving...' : member ? 'Update' : 'Create'}
             </Button>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
 // Delete Confirmation Modal
-function DeleteConfirmModal({ isOpen, onClose, member, onConfirm }) {
-  const [loading, setLoading] = useState(false);
+function DeleteConfirmModal({ isOpen, onClose, member, onDeactivate, onPermanentDelete }) {
+  const [deactivating, setDeactivating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleConfirm = async () => {
-    setLoading(true);
+  const handleDeactivate = async () => {
+    setDeactivating(true);
+    setError('');
     try {
-      await onConfirm();
+      await onDeactivate();
       onClose();
     } catch (error) {
-      // Error handled in parent
+      setError(error?.message || 'Failed to deactivate team member');
     } finally {
-      setLoading(false);
+      setDeactivating(false);
+    }
+  };
+
+  const handlePermanentDelete = async () => {
+    setDeleting(true);
+    setError('');
+    try {
+      await onPermanentDelete();
+      onClose();
+    } catch (error) {
+      setError(error?.message || 'Failed to permanently delete team member');
+    } finally {
+      setDeleting(false);
     }
   };
 
   if (!isOpen || !member) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
-            <Trash2 size={24} className="text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Deactivate Team Member</h3>
-          <p className="text-gray-600 mb-6">
-            Are you sure you want to deactivate <strong>{member.name}</strong>? They will lose access to the dashboard.
-          </p>
-          <div className="flex justify-center gap-3">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700"
-              onClick={handleConfirm}
-              disabled={loading}
-            >
-              {loading ? 'Deactivating...' : 'Deactivate'}
-            </Button>
+    <ModalPortal>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 z-[9998]"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Modal */}
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
+        aria-modal="true"
+        role="dialog"
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+              <Trash2 size={24} className="text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Remove Team Member</h3>
+            <p className="text-gray-600 mb-2">
+              <strong>{member.name}</strong> ({member.email})
+            </p>
+            <p className="text-sm text-gray-500 mb-4">
+              Choose how you want to remove this team member:
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {/* Deactivate Option */}
+              <div className="border border-gray-200 rounded-lg p-4 text-left">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">Deactivate</h4>
+                    <p className="text-sm text-gray-500 mt-1">
+                      User will lose access but their data is preserved. Can be reactivated later.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="ml-3 flex-shrink-0"
+                    onClick={handleDeactivate}
+                    disabled={deactivating || deleting}
+                  >
+                    {deactivating ? 'Deactivating...' : 'Deactivate'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Permanent Delete Option */}
+              <div className="border border-red-200 rounded-lg p-4 text-left bg-red-50/50">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-red-900">Permanent Delete</h4>
+                    <p className="text-sm text-red-700 mt-1">
+                      <strong>Warning:</strong> This action cannot be undone. All user data will be permanently removed.
+                    </p>
+                  </div>
+                  <Button
+                    className="ml-3 flex-shrink-0 bg-red-600 hover:bg-red-700"
+                    onClick={handlePermanentDelete}
+                    disabled={deactivating || deleting}
+                  >
+                    {deleting ? 'Deleting...' : 'Delete Permanently'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <Button variant="ghost" onClick={onClose} disabled={deactivating || deleting}>
+                Cancel
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 }
 
@@ -513,6 +642,28 @@ export default function TeamManagementPage() {
       fetchTeamMembers();
     } catch (error) {
       toast.error(error.message || 'Failed to deactivate team member');
+      throw error;
+    }
+  };
+
+  const handleActivateMember = async (member) => {
+    try {
+      await authService.updateTeamMember(member._id, { isActive: true });
+      toast.success('Team member activated successfully');
+      fetchTeamMembers();
+    } catch (error) {
+      toast.error(error.message || 'Failed to activate team member');
+    }
+  };
+
+  const handlePermanentDeleteMember = async () => {
+    try {
+      await authService.permanentDeleteTeamMember(selectedMember._id);
+      toast.success('Team member permanently deleted');
+      fetchTeamMembers();
+    } catch (error) {
+      const errorMessage = error?.response?.data?.message || error.message || 'Failed to permanently delete team member';
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -674,6 +825,7 @@ export default function TeamManagementPage() {
                     member={member}
                     onEdit={openEditModal}
                     onDelete={openDeleteModal}
+                    onActivate={handleActivateMember}
                   />
                 ))}
               </tbody>
@@ -694,7 +846,8 @@ export default function TeamManagementPage() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         member={selectedMember}
-        onConfirm={handleDeleteMember}
+        onDeactivate={handleDeleteMember}
+        onPermanentDelete={handlePermanentDeleteMember}
       />
     </div>
   );
