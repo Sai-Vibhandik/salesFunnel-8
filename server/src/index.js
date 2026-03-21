@@ -6,10 +6,8 @@ const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
 
 // Load environment variables (works locally and on Railway)
-// const envPath = path.join(__dirname, '../../.env');
-// require('dotenv').config({ path: envPath, override: false });
-
-require('dotenv').config()
+const envPath = path.join(__dirname, '../../.env');
+require('dotenv').config({ path: envPath, override: false });
 
 // Import database connection
 const connectDB = require('./config/database');
