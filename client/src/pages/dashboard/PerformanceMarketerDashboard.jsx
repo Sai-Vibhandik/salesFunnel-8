@@ -422,7 +422,7 @@ export default function PerformanceMarketerDashboard({ user }) {
                         )}
 
                         {/* Last Updated */}
-                        {/* <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+                        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
                           <span className="text-gray-500">
                             Last updated: {formatDate(project.updatedAt)}
                           </span>
@@ -443,7 +443,7 @@ export default function PerformanceMarketerDashboard({ user }) {
                               Details
                             </Button>
                           </div>
-                        </div> */}
+                        </div>
                       </CardBody>
                     </Card>
                   );

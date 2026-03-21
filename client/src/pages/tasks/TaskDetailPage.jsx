@@ -1700,7 +1700,7 @@ export default function TaskDetailPage() {
               )}
 
               {/* ============ OTHER CREATIVE TASKS (Graphic Designer, etc.) ============ */}
-              {task.taskType !== 'landing_page_design' && task.taskType !== 'landing_page_development' && task.taskType !== "content_creation" && (
+              {task.taskType !== 'landing_page_design' && task.taskType !== 'landing_page_development' && (
                 <>
                   {/* Creative Link - Required */}
                   <div>

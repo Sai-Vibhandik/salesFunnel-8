@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Card, CardBody, Button, Spinner } from '@/components/ui';
 import { Plus, FileText, Edit, Trash2, ArrowRight, Users, Code, Palette, AlertCircle } from 'lucide-react';
-import { projectService, authService } from '@/services/api';
+import { projectService } from '@/services/api';
 
 const FUNNEL_TYPES = {
   video_sales_letter: 'Video Sales Letter',
@@ -29,29 +29,26 @@ export default function LandingPagesList({ projectId }) {
   const navigate = useNavigate();
   const [landingPages, setLandingPages] = useState([]);
   const [project, setProject] = useState(null);
-  const [teamMembers, setTeamMembers] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
 
-  // Get designer/developer name from all team members
+  // Extract team members from project for display
   const getDesignerName = (designerId) => {
-    if (!designerId) return 'Not assigned';
-    // Handle populated object or raw ID
-    const id = designerId?._id?.toString() || designerId?.toString();
-    if (!id) return 'Not assigned';
-    const designers = teamMembers.ui_ux_designer || [];
-    const designer = designers.find(d => (d._id || d)?.toString() === id);
+    if (!designerId || !project?.assignedTeam) return 'Not assigned';
+    const designers = project.assignedTeam.uiUxDesigners || [];
+    const legacyDesigner = project.assignedTeam.uiUxDesigner;
+    const allDesigners = designers.length > 0 ? designers : (legacyDesigner ? [legacyDesigner] : []);
+    const designer = allDesigners.find(d => (d._id || d)?.toString() === designerId?.toString());
     return designer?.name || 'Unknown';
   };
 
   const getDeveloperName = (developerId) => {
-    if (!developerId) return 'Not assigned';
-    // Handle populated object or raw ID
-    const id = developerId?._id?.toString() || developerId?.toString();
-    if (!id) return 'Not assigned';
-    const developers = teamMembers.developer || [];
-    const developer = developers.find(d => (d._id || d)?.toString() === id);
+    if (!developerId || !project?.assignedTeam) return 'Not assigned';
+    const developers = project.assignedTeam.developers || [];
+    const legacyDeveloper = project.assignedTeam.developer;
+    const allDevelopers = developers.length > 0 ? developers : (legacyDeveloper ? [legacyDeveloper] : []);
+    const developer = allDevelopers.find(d => (d._id || d)?.toString() === developerId?.toString());
     return developer?.name || 'Unknown';
   };
 
@@ -62,15 +59,9 @@ export default function LandingPagesList({ projectId }) {
   const fetchLandingPages = async () => {
     try {
       setLoading(true);
-      // Fetch project and team members in parallel
-      const [projectRes, teamRes] = await Promise.all([
-        projectService.getProject(projectId),
-        authService.getTeamByRole()
-      ]);
-
-      setProject(projectRes.data);
-      setLandingPages(projectRes.data.landingPages || []);
-      setTeamMembers(teamRes.data || {});
+      const response = await projectService.getProject(projectId);
+      setProject(response.data);
+      setLandingPages(response.data.landingPages || []);
     } catch (error) {
       console.error('Error fetching landing pages:', error);
       toast.error(error?.message || 'Failed to load landing pages');
@@ -124,6 +115,13 @@ export default function LandingPagesList({ projectId }) {
   const handleContinue = async () => {
     if (!landingPages || landingPages.length === 0) {
       toast.error('Please add at least one landing page before continuing');
+      return;
+    }
+
+    // Check if all landing pages have team assignments
+    const unassignedLPs = landingPages.filter(lp => !lp.assignedDesigner || !lp.assignedDeveloper);
+    if (unassignedLPs.length > 0) {
+      toast.error(`${unassignedLPs.length} landing page(s) missing team assignments. Please edit and assign designer/developer.`);
       return;
     }
 
@@ -196,23 +194,20 @@ export default function LandingPagesList({ projectId }) {
                       </span>
                     </div>
 
-                    {/* Ad Platforms */}
-                    {lp.adPlatforms && lp.adPlatforms.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex flex-wrap gap-1">
-                          {lp.adPlatforms.slice(0, 3).map(platform => (
-                            <span key={platform} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                              {PLATFORMS[platform] || platform}
-                            </span>
-                          ))}
-                          {lp.adPlatforms.length > 3 && (
-                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                              +{lp.adPlatforms.length - 3} more
-                            </span>
-                          )}
+                    <div className="space-y-2 mb-4">
+                      {lp.hook && (
+                        <div className="text-sm">
+                          <span className="text-gray-500">Hook:</span>{' '}
+                          <span className="text-gray-700 truncate">{lp.hook.substring(0, 50)}...</span>
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {lp.platform && (
+                        <div className="text-sm">
+                          <span className="text-gray-500">Platform:</span>{' '}
+                          <span className="text-gray-700">{PLATFORMS[lp.platform] || lp.platform}</span>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Team Assignments */}
                     <div className="flex items-center gap-3 mb-3">
