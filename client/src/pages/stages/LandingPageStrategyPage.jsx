@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Card, CardBody, CardHeader, Button, Input, Textarea, Spinner } from '@/components/ui';
+import { Card, CardBody, CardHeader, Button, Input, Spinner } from '@/components/ui';
 import { StageProgressTracker } from '@/components/workflow';
 import { ArrowLeft, ArrowRight, Users, Code, Palette } from 'lucide-react';
-import { projectService } from '@/services/api';
+import { projectService, authService } from '@/services/api';
 
 const LANDING_PAGE_TYPES = [
   { id: 'video_sales_letter', label: 'Video Sales Letter', icon: '🎥' },
@@ -34,18 +34,13 @@ export default function LandingPageStrategyPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [project, setProject] = useState(null);
-  const [designers, setDesigners] = useState([]);
-  const [developers, setDevelopers] = useState([]);
+  const [allDesigners, setAllDesigners] = useState([]);
+  const [allDevelopers, setAllDevelopers] = useState([]);
 
   // Form state
   const [name, setName] = useState('');
   const [funnelType, setFunnelType] = useState('video_sales_letter');
-  const [hook, setHook] = useState('');
-  const [angle, setAngle] = useState('');
   const [adPlatforms, setAdPlatforms] = useState(['facebook']);
-  const [cta, setCta] = useState('');
-  const [offer, setOffer] = useState('');
-  const [messaging, setMessaging] = useState('');
   const [assignedDesigner, setAssignedDesigner] = useState('');
   const [assignedDeveloper, setAssignedDeveloper] = useState('');
 
@@ -61,23 +56,18 @@ export default function LandingPageStrategyPage() {
     try {
       setLoading(true);
 
-      const projectRes = await projectService.getProject(projectId);
+      // Fetch project and team members in parallel
+      const [projectRes, teamRes] = await Promise.all([
+        projectService.getProject(projectId),
+        authService.getTeamByRole()
+      ]);
+
       setProject(projectRes.data);
 
-      // Extract designers and developers from project's assigned team
-      const assignedTeam = projectRes.data.assignedTeam || {};
-
-      // Get UI/UX Designers
-      const uiUxDesigners = assignedTeam.uiUxDesigners || [];
-      const uiUxDesignerLegacy = assignedTeam.uiUxDesigner;
-      const allDesigners = uiUxDesigners.length > 0 ? uiUxDesigners : (uiUxDesignerLegacy ? [uiUxDesignerLegacy] : []);
-      setDesigners(allDesigners);
-
-      // Get Developers
-      const developersList = assignedTeam.developers || [];
-      const developerLegacy = assignedTeam.developer;
-      const allDevelopers = developersList.length > 0 ? developersList : (developerLegacy ? [developerLegacy] : []);
-      setDevelopers(allDevelopers);
+      // Extract all available UI/UX Designers and Developers from the team
+      const teamByRole = teamRes.data || {};
+      setAllDesigners(teamByRole.ui_ux_designer || []);
+      setAllDevelopers(teamByRole.developer || []);
 
       // Check if traffic strategy is completed
       if (!projectRes.data.stages?.trafficStrategy?.isCompleted) {
@@ -88,29 +78,16 @@ export default function LandingPageStrategyPage() {
 
       if (landingPageId) {
         // Load specific landing page from embedded array
-        const lp = projectRes.data.landingPages?.find(lp => lp._id === landingPageId);
+        const lp = projectRes.data.landingPages?.find(lp => lp._id.toString() === landingPageId);
         if (lp) {
           setName(lp.name || '');
           setFunnelType(lp.funnelType || 'video_sales_letter');
-          setHook(lp.hook || '');
-          setAngle(lp.angle || '');
-          setAdPlatforms(lp.adPlatforms || ['facebook']);
-          setCta(lp.cta || '');
-          setOffer(lp.offer || '');
-          setMessaging(lp.messaging || '');
+          setAdPlatforms(lp.adPlatforms?.length > 0 ? lp.adPlatforms : ['facebook']);
           setAssignedDesigner(lp.assignedDesigner?._id || lp.assignedDesigner?.toString() || '');
           setAssignedDeveloper(lp.assignedDeveloper?._id || lp.assignedDeveloper?.toString() || '');
         } else {
           toast.error('Landing page not found');
           navigate(`/landing-pages?projectId=${projectId}`);
-        }
-      } else {
-        // For new landing page, pre-select if only one designer/developer available
-        if (allDesigners.length === 1) {
-          setAssignedDesigner((allDesigners[0]._id || allDesigners[0])?.toString());
-        }
-        if (allDevelopers.length === 1) {
-          setAssignedDeveloper((allDevelopers[0]._id || allDevelopers[0])?.toString());
         }
       }
     } catch (error) {
@@ -128,30 +105,16 @@ export default function LandingPageStrategyPage() {
       return;
     }
 
-    if (!assignedDesigner) {
-      toast.error('Please select a UI/UX Designer for this landing page');
-      return;
-    }
-
-    if (!assignedDeveloper) {
-      toast.error('Please select a Developer for this landing page');
-      return;
-    }
-
+    // Team assignment is optional - don't require it
     try {
       setSaving(true);
 
       const landingPageData = {
         name,
         funnelType,
-        hook,
-        angle,
         adPlatforms,
-        cta,
-        offer,
-        messaging,
-        assignedDesigner,
-        assignedDeveloper,
+        assignedDesigner: assignedDesigner || null,
+        assignedDeveloper: assignedDeveloper || null,
       };
 
       if (landingPageId) {
@@ -181,30 +144,15 @@ export default function LandingPageStrategyPage() {
       return;
     }
 
-    if (!assignedDesigner) {
-      toast.error('Please select a UI/UX Designer for this landing page');
-      return;
-    }
-
-    if (!assignedDeveloper) {
-      toast.error('Please select a Developer for this landing page');
-      return;
-    }
-
     try {
       setSaving(true);
 
       const landingPageData = {
         name,
         funnelType,
-        hook,
-        angle,
         adPlatforms,
-        cta,
-        offer,
-        messaging,
-        assignedDesigner,
-        assignedDeveloper,
+        assignedDesigner: assignedDesigner || null,
+        assignedDeveloper: assignedDeveloper || null,
       };
 
       if (landingPageId) {
@@ -220,7 +168,7 @@ export default function LandingPageStrategyPage() {
         console.error('Error completing stage:', completeError);
       }
 
-      // Navigate to creative strategy - no task generation
+      // Navigate to creative strategy
       navigate(`/creative-strategy?projectId=${projectId}`);
     } catch (error) {
       console.error('Error saving landing page:', error);
@@ -326,106 +274,62 @@ export default function LandingPageStrategyPage() {
             <Users className="w-5 h-5 text-primary-500" />
             Team Assignment
           </h2>
-          <p className="text-sm text-gray-500">Assign team members for this landing page</p>
+          <p className="text-sm text-gray-500">Assign team members for this landing page (optional)</p>
         </CardHeader>
         <CardBody className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Palette className="w-4 h-4 text-purple-500" />
-                UI/UX Designer *
+                UI/UX Designer
               </label>
               <select
                 value={assignedDesigner}
                 onChange={(e) => setAssignedDesigner(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="">Select Designer...</option>
-                {designers.map(d => (
+                <option value="">Select Designer (optional)...</option>
+                {allDesigners.map(d => (
                   <option key={d._id || d} value={(d._id || d).toString()}>
                     {d.name || 'Unknown'}
                   </option>
                 ))}
               </select>
-              {designers.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">
-                  ⚠️ No UI/UX Designers assigned to this project. Contact Admin.
+              {allDesigners.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  No UI/UX Designers found in team.
                 </p>
               )}
             </div>
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 <Code className="w-4 h-4 text-green-500" />
-                Developer *
+                Developer
               </label>
               <select
                 value={assignedDeveloper}
                 onChange={(e) => setAssignedDeveloper(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               >
-                <option value="">Select Developer...</option>
-                {developers.map(d => (
+                <option value="">Select Developer (optional)...</option>
+                {allDevelopers.map(d => (
                   <option key={d._id || d} value={(d._id || d).toString()}>
                     {d.name || 'Unknown'}
                   </option>
                 ))}
               </select>
-              {developers.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">
-                  ⚠️ No Developers assigned to this project. Contact Admin.
+              {allDevelopers.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  No Developers found in team.
                 </p>
               )}
             </div>
           </div>
           <p className="text-xs text-gray-500">
-            Each landing page needs one UI/UX Designer for design and one Developer for implementation.
-            These assignments will be used when generating tasks.
+            You can assign team members now or later. Assignments will be used when generating tasks.
           </p>
         </CardBody>
       </Card>
-
-      {/* Strategy Fields
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-gray-900">Strategy</h2>
-          <p className="text-sm text-gray-500">Define the hook and angle for this landing page</p>
-        </CardHeader>
-        <CardBody className="space-y-4">
-          <Textarea
-            label="Hook"
-            placeholder="What's the main hook that grabs attention?"
-            value={hook}
-            onChange={(e) => setHook(e.target.value)}
-            rows={2}
-          />
-          <Textarea
-            label="Angle"
-            placeholder="What's the creative angle or approach?"
-            value={angle}
-            onChange={(e) => setAngle(e.target.value)}
-            rows={2}
-          />
-          <Input
-            label="Call-to-Action (CTA)"
-            placeholder="e.g., Get Started Now"
-            value={cta}
-            onChange={(e) => setCta(e.target.value)}
-          />
-          <Input
-            label="Offer"
-            placeholder="What's the main offer?"
-            value={offer}
-            onChange={(e) => setOffer(e.target.value)}
-          />
-          <Textarea
-            label="Messaging"
-            placeholder="Key messaging and talking points"
-            value={messaging}
-            onChange={(e) => setMessaging(e.target.value)}
-            rows={3}
-          />
-        </CardBody>
-      </Card> */}
 
       {/* Actions */}
       <div className="flex justify-between gap-4">

@@ -6,11 +6,21 @@ const { hasProjectAccess } = require('../utils/auth');
 
 const checkProjectAccess = async (projectId, user) => {
   const project = await Project.findById(projectId)
-    .populate('assignedTeam.performanceMarketer', '_id')
-    .populate('assignedTeam.uiUxDesigner', '_id')
-    .populate('assignedTeam.graphicDesigner', '_id')
-    .populate('assignedTeam.developer', '_id')
-    .populate('assignedTeam.tester', '_id');
+    .populate('assignedTeam.performanceMarketer', '_id name')
+    .populate('assignedTeam.performanceMarketers', '_id name')
+    .populate('assignedTeam.contentCreator', '_id name')
+    .populate('assignedTeam.contentWriter', '_id name')
+    .populate('assignedTeam.contentWriters', '_id name')
+    .populate('assignedTeam.uiUxDesigner', '_id name')
+    .populate('assignedTeam.uiUxDesigners', '_id name')
+    .populate('assignedTeam.graphicDesigner', '_id name')
+    .populate('assignedTeam.graphicDesigners', '_id name')
+    .populate('assignedTeam.videoEditor', '_id name')
+    .populate('assignedTeam.videoEditors', '_id name')
+    .populate('assignedTeam.developer', '_id name')
+    .populate('assignedTeam.developers', '_id name')
+    .populate('assignedTeam.tester', '_id name')
+    .populate('assignedTeam.testers', '_id name');
 
   if (!project) {
     return { project: null, error: { status: 404, message: 'Project not found' } };

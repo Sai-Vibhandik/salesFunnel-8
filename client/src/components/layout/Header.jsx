@@ -173,7 +173,7 @@ export default function Header() {
                 {user?.avatar ? (
                   <img src={user.avatar} alt={user.name} className="w-full h-full rounded-xl object-cover" />
                 ) : (
-                  <span className="text-white text-sm font-semibold">
+                  <span className="text-black text-sm font-semibold">
                     {user?.name?.charAt(0).toUpperCase()}
                   </span>
                 )}

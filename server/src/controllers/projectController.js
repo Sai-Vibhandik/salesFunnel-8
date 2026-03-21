@@ -176,7 +176,10 @@ exports.getProject = async (req, res, next) => {
       .populate('assignedTeam.uiUxDesigner', 'name email specialization avatar')
       .populate('assignedTeam.graphicDesigner', 'name email specialization avatar')
       .populate('assignedTeam.developer', 'name email specialization avatar')
-      .populate('assignedTeam.tester', 'name email specialization avatar');
+      .populate('assignedTeam.tester', 'name email specialization avatar')
+      // Landing page team assignments
+      .populate('landingPages.assignedDesigner', 'name email specialization avatar')
+      .populate('landingPages.assignedDeveloper', 'name email specialization avatar');
 
     if (!project) {
       return res.status(404).json({
@@ -877,7 +880,7 @@ exports.createNotification = createNotification;
 exports.addLandingPage = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, funnelType, platform, hook, angle, cta, offer, messaging, leadCaptureMethod, headline, subheadline, assignedDesigner, assignedDeveloper } = req.body;
+    const { name, funnelType, adPlatforms, hook, angle, cta, offer, messaging, leadCaptureMethod, headline, subheadline, assignedDesigner, assignedDeveloper } = req.body;
 
     const project = await Project.findById(id);
     if (!project) {
@@ -901,7 +904,7 @@ exports.addLandingPage = async (req, res, next) => {
     const newLandingPage = {
       name: name || `Landing Page ${project.landingPages.length + 1}`,
       funnelType: funnelType || 'video_sales_letter',
-      platform: platform || 'facebook',
+      adPlatforms: adPlatforms || ['facebook'],
       hook: hook || '',
       angle: angle || '',
       cta: cta || '',
@@ -919,9 +922,16 @@ exports.addLandingPage = async (req, res, next) => {
     project.landingPages.push(newLandingPage);
     await project.save();
 
+    // Re-fetch with populated fields
+    const updatedProject = await Project.findById(id)
+      .populate('landingPages.assignedDesigner', 'name email specialization avatar')
+      .populate('landingPages.assignedDeveloper', 'name email specialization avatar');
+
+    const addedLandingPage = updatedProject.landingPages[updatedProject.landingPages.length - 1];
+
     res.status(201).json({
       success: true,
-      data: project.landingPages[project.landingPages.length - 1]
+      data: addedLandingPage
     });
   } catch (error) {
     next(error);
@@ -935,7 +945,10 @@ exports.getLandingPages = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const project = await Project.findById(id);
+    const project = await Project.findById(id)
+      .populate('landingPages.assignedDesigner', 'name email specialization avatar')
+      .populate('landingPages.assignedDeveloper', 'name email specialization avatar');
+
     if (!project) {
       return res.status(404).json({
         success: false,
@@ -1007,7 +1020,7 @@ exports.getLandingPage = async (req, res, next) => {
 exports.updateLandingPage = async (req, res, next) => {
   try {
     const { id, landingPageId } = req.params;
-    const { name, funnelType, platform, hook, angle, cta, offer, messaging, leadCaptureMethod, headline, subheadline, assignedDesigner, assignedDeveloper } = req.body;
+    const { name, funnelType, adPlatforms, hook, angle, cta, offer, messaging, leadCaptureMethod, headline, subheadline, assignedDesigner, assignedDeveloper } = req.body;
 
     const project = await Project.findById(id);
     if (!project) {
@@ -1038,7 +1051,7 @@ exports.updateLandingPage = async (req, res, next) => {
     // Update fields
     if (name !== undefined) landingPage.name = name;
     if (funnelType !== undefined) landingPage.funnelType = funnelType;
-    if (platform !== undefined) landingPage.platform = platform;
+    if (adPlatforms !== undefined) landingPage.adPlatforms = adPlatforms;
     if (hook !== undefined) landingPage.hook = hook;
     if (angle !== undefined) landingPage.angle = angle;
     if (cta !== undefined) landingPage.cta = cta;
@@ -1047,15 +1060,22 @@ exports.updateLandingPage = async (req, res, next) => {
     if (leadCaptureMethod !== undefined) landingPage.leadCaptureMethod = leadCaptureMethod;
     if (headline !== undefined) landingPage.headline = headline;
     if (subheadline !== undefined) landingPage.subheadline = subheadline;
-    if (assignedDesigner !== undefined) landingPage.assignedDesigner = assignedDesigner;
-    if (assignedDeveloper !== undefined) landingPage.assignedDeveloper = assignedDeveloper;
+    if (assignedDesigner !== undefined) landingPage.assignedDesigner = assignedDesigner || null;
+    if (assignedDeveloper !== undefined) landingPage.assignedDeveloper = assignedDeveloper || null;
     landingPage.updatedAt = new Date();
 
     await project.save();
 
+    // Re-fetch with populated fields
+    const updatedProject = await Project.findById(id)
+      .populate('landingPages.assignedDesigner', 'name email specialization avatar')
+      .populate('landingPages.assignedDeveloper', 'name email specialization avatar');
+
+    const updatedLandingPage = updatedProject.landingPages.id(landingPageId);
+
     res.status(200).json({
       success: true,
-      data: landingPage
+      data: updatedLandingPage
     });
   } catch (error) {
     next(error);

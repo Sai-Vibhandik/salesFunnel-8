@@ -19,14 +19,36 @@ exports.hasProjectAccess = (project, user) => {
     return true;
   }
 
-  // Check if user is assigned to the team
+  // Check if user is assigned to the team (support both singular and plural field names)
+  const assignedTeam = project.assignedTeam || {};
+
+  // Check all possible team assignments
   const isAssigned =
-    project.assignedTeam?.performanceMarketer?._id?.toString() === userId ||
-    project.assignedTeam?.contentCreator?._id?.toString() === userId ||
-    project.assignedTeam?.uiUxDesigner?._id?.toString() === userId ||
-    project.assignedTeam?.graphicDesigner?._id?.toString() === userId ||
-    project.assignedTeam?.developer?._id?.toString() === userId ||
-    project.assignedTeam?.tester?._id?.toString() === userId;
+    // Singular fields (legacy)
+    assignedTeam.performanceMarketer?._id?.toString() === userId ||
+    assignedTeam.performanceMarketer?.toString() === userId ||
+    assignedTeam.contentCreator?._id?.toString() === userId ||
+    assignedTeam.contentCreator?.toString() === userId ||
+    assignedTeam.contentWriter?._id?.toString() === userId ||
+    assignedTeam.contentWriter?.toString() === userId ||
+    assignedTeam.uiUxDesigner?._id?.toString() === userId ||
+    assignedTeam.uiUxDesigner?.toString() === userId ||
+    assignedTeam.graphicDesigner?._id?.toString() === userId ||
+    assignedTeam.graphicDesigner?.toString() === userId ||
+    assignedTeam.videoEditor?._id?.toString() === userId ||
+    assignedTeam.videoEditor?.toString() === userId ||
+    assignedTeam.developer?._id?.toString() === userId ||
+    assignedTeam.developer?.toString() === userId ||
+    assignedTeam.tester?._id?.toString() === userId ||
+    assignedTeam.tester?.toString() === userId ||
+    // Plural fields (arrays)
+    (assignedTeam.performanceMarketers && assignedTeam.performanceMarketers.some(m => (m._id || m)?.toString() === userId)) ||
+    (assignedTeam.contentWriters && assignedTeam.contentWriters.some(m => (m._id || m)?.toString() === userId)) ||
+    (assignedTeam.uiUxDesigners && assignedTeam.uiUxDesigners.some(m => (m._id || m)?.toString() === userId)) ||
+    (assignedTeam.graphicDesigners && assignedTeam.graphicDesigners.some(m => (m._id || m)?.toString() === userId)) ||
+    (assignedTeam.videoEditors && assignedTeam.videoEditors.some(m => (m._id || m)?.toString() === userId)) ||
+    (assignedTeam.developers && assignedTeam.developers.some(m => (m._id || m)?.toString() === userId)) ||
+    (assignedTeam.testers && assignedTeam.testers.some(m => (m._id || m)?.toString() === userId));
 
   return isAssigned;
 };
@@ -50,11 +72,20 @@ exports.checkProjectAccess = (projectIdParam = 'projectId') => {
 
       const project = await Project.findById(projectId)
         .populate('assignedTeam.performanceMarketer', '_id')
+        .populate('assignedTeam.performanceMarketers', '_id')
         .populate('assignedTeam.contentCreator', '_id')
+        .populate('assignedTeam.contentWriter', '_id')
+        .populate('assignedTeam.contentWriters', '_id')
         .populate('assignedTeam.uiUxDesigner', '_id')
+        .populate('assignedTeam.uiUxDesigners', '_id')
         .populate('assignedTeam.graphicDesigner', '_id')
+        .populate('assignedTeam.graphicDesigners', '_id')
+        .populate('assignedTeam.videoEditor', '_id')
+        .populate('assignedTeam.videoEditors', '_id')
         .populate('assignedTeam.developer', '_id')
-        .populate('assignedTeam.tester', '_id');
+        .populate('assignedTeam.developers', '_id')
+        .populate('assignedTeam.tester', '_id')
+        .populate('assignedTeam.testers', '_id');
 
       if (!project) {
         return res.status(404).json({

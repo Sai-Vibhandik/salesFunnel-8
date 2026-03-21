@@ -55,22 +55,20 @@ export default function LandingPagesSection({ projectId, landingPages = [], onSa
     assignedDeveloper: ''
   });
 
-  // Fetch available designers and developers from project's assigned team
+  // Fetch all available designers and developers from team
   useEffect(() => {
-    if (assignedTeam) {
-      // Get UI/UX Designers from project's assigned team
-      const uiUxDesigners = assignedTeam.uiUxDesigners || [];
-      const uiUxDesignerLegacy = assignedTeam.uiUxDesigner;
-      const allDesigners = uiUxDesigners.length > 0 ? uiUxDesigners : (uiUxDesignerLegacy ? [uiUxDesignerLegacy] : []);
-      setDesigners(allDesigners);
-
-      // Get Developers from project's assigned team
-      const developersList = assignedTeam.developers || [];
-      const developerLegacy = assignedTeam.developer;
-      const allDevelopers = developersList.length > 0 ? developersList : (developerLegacy ? [developerLegacy] : []);
-      setDevelopers(allDevelopers);
-    }
-  }, [assignedTeam]);
+    const fetchTeamMembers = async () => {
+      try {
+        const teamRes = await authService.getTeamByRole();
+        const teamByRole = teamRes.data || {};
+        setDesigners(teamByRole.ui_ux_designer || []);
+        setDevelopers(teamByRole.developer || []);
+      } catch (error) {
+        console.error('Error fetching team members:', error);
+      }
+    };
+    fetchTeamMembers();
+  }, []);
 
   const resetForm = () => {
     setFormData({
@@ -324,7 +322,7 @@ export default function LandingPagesSection({ projectId, landingPages = [], onSa
                   </select>
                   {designers.length === 0 && (
                     <p className="text-xs text-amber-600 mt-1">
-                      ⚠️ No UI/UX Designers assigned to this project. Contact Admin.
+                      No UI/UX Designers available in team. Add team members in Team Management.
                     </p>
                   )}
                 </div>
@@ -347,7 +345,7 @@ export default function LandingPagesSection({ projectId, landingPages = [], onSa
                   </select>
                   {developers.length === 0 && (
                     <p className="text-xs text-amber-600 mt-1">
-                      ⚠️ No Developers assigned to this project. Contact Admin.
+                      No Developers available in team. Add team members in Team Management.
                     </p>
                   )}
                 </div>
