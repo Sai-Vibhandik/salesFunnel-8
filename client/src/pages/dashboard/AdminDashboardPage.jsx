@@ -52,12 +52,9 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Modal Portal Component - renders modals at document.body to avoid z-index issues
+// Modal Portal Component
 function ModalPortal({ children }) {
-  return ReactDOM.createPortal(
-    children,
-    document.body
-  );
+  return ReactDOM.createPortal(children, document.body);
 }
 
 // Role icon mapping
@@ -72,30 +69,45 @@ const ROLE_ICONS = {
   tester: { icon: CheckCircle, color: 'bg-orange-100 text-orange-600', gradient: 'from-orange-400 to-orange-600' },
 };
 
+const ROLE_LABELS = {
+  admin: 'Admin',
+  performance_marketer: 'Performance Marketer',
+  content_writer: 'Content Writer',
+  ui_ux_designer: 'UI/UX Designer',
+  graphic_designer: 'Graphic Designer',
+  video_editor: 'Video Editor',
+  developer: 'Developer',
+  tester: 'Tester',
+};
+
+const ROLE_BADGE_COLORS = {
+  admin: 'bg-red-100 text-red-700',
+  performance_marketer: 'bg-blue-100 text-blue-700',
+  content_writer: 'bg-emerald-100 text-emerald-700',
+  ui_ux_designer: 'bg-purple-100 text-purple-700',
+  graphic_designer: 'bg-pink-100 text-pink-700',
+  video_editor: 'bg-cyan-100 text-cyan-700',
+  developer: 'bg-green-100 text-green-700',
+  tester: 'bg-orange-100 text-orange-700',
+};
+
+const AVAILABILITY_COLORS = {
+  available: 'bg-green-500',
+  busy: 'bg-yellow-500',
+  offline: 'bg-gray-400',
+};
+
 // Role Icon Component
 function RoleIcon({ role, size = 'md', showLabel = false }) {
   const config = ROLE_ICONS[role] || ROLE_ICONS.admin;
   const Icon = config.icon;
 
-  const sizes = {
-    sm: 'w-8 h-8',
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12',
-  };
-
-  const iconSizes = {
-    sm: 16,
-    md: 20,
-    lg: 24,
-  };
+  const sizes = { sm: 'w-8 h-8', md: 'w-10 h-10', lg: 'w-12 h-12' };
+  const iconSizes = { sm: 16, md: 20, lg: 24 };
 
   return (
     <div className="flex items-center gap-2">
-      <div className={cn(
-        sizes[size],
-        'rounded-xl flex items-center justify-center',
-        config.color
-      )}>
+      <div className={cn(sizes[size], 'rounded-xl flex items-center justify-center', config.color)}>
         <Icon size={iconSizes[size]} />
       </div>
       {showLabel && (
@@ -107,7 +119,7 @@ function RoleIcon({ role, size = 'md', showLabel = false }) {
   );
 }
 
-// Stat Card Component with Enhanced UI
+// Stat Card Component
 function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
   const isPositive = changeType === 'positive';
   return (
@@ -138,75 +150,58 @@ function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
   );
 }
 
-// Team Member Card with Role Icons
+// Team Member Card — fixed grid layout for consistent role column
 function TeamMemberCard({ member, onClick }) {
-  const roleColors = {
-    admin: 'bg-red-100 text-red-700',
-    performance_marketer: 'bg-blue-100 text-blue-700',
-    content_writer: 'bg-emerald-100 text-emerald-700',
-    ui_ux_designer: 'bg-purple-100 text-purple-700',
-    graphic_designer: 'bg-pink-100 text-pink-700',
-    video_editor: 'bg-cyan-100 text-cyan-700',
-    developer: 'bg-green-100 text-green-700',
-    tester: 'bg-orange-100 text-orange-700',
-  };
-
-  const roleLabels = {
-    admin: 'Admin',
-    performance_marketer: 'Performance Marketer',
-    content_writer: 'Content Writer',
-    ui_ux_designer: 'UI/UX Designer',
-    graphic_designer: 'Graphic Designer',
-    video_editor: 'Video Editor',
-    developer: 'Developer',
-    tester: 'Tester',
-  };
-
-  const availabilityColors = {
-    available: 'bg-green-500',
-    busy: 'bg-yellow-500',
-    offline: 'bg-gray-400',
-  };
-
   const roleConfig = ROLE_ICONS[member.role] || ROLE_ICONS.admin;
   const Icon = roleConfig.icon;
 
   return (
-    <div
-      onClick={onClick}
-      className="team-member-card-enhanced"
-    >
-      <div className="flex items-center gap-3">
-        <div className="relative">
+    <div onClick={onClick} className="team-member-card-enhanced cursor-pointer">
+      {/* Grid: avatar | name+email | role badge */}
+      <div
+        className="grid items-center gap-3"
+        style={{ gridTemplateColumns: '48px 1fr auto' }}
+      >
+        {/* Avatar */}
+        <div className="relative flex-shrink-0">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
             {member.name?.charAt(0).toUpperCase()}
           </div>
           <div className={cn(
             'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white',
-            availabilityColors[member.availability]
+            AVAILABILITY_COLORS[member.availability] || 'bg-gray-400'
           )} />
         </div>
-        <div className="flex-1 min-w-0">
+
+        {/* Name + Email */}
+        <div className="min-w-0">
           <h4 className="font-semibold text-gray-900 truncate">{member.name}</h4>
           <p className="text-sm text-gray-500 truncate">{member.email}</p>
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Role badge — always right-aligned, fixed width */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <div className={cn('p-1.5 rounded-lg', roleConfig.color)}>
             <Icon size={14} />
           </div>
-          <Badge className={cn('text-xs', roleColors[member.role])}>
-            {roleLabels[member.role]}
-          </Badge>
+          <span className={cn(
+            'text-xs font-medium px-2 py-1 rounded-lg whitespace-nowrap',
+            ROLE_BADGE_COLORS[member.role] || 'bg-gray-100 text-gray-700'
+          )}>
+            {ROLE_LABELS[member.role] || member.role}
+          </span>
         </div>
       </div>
+
+      {/* Specialization */}
       {member.specialization && (
-        <p className="mt-2 text-xs text-gray-400">{member.specialization}</p>
+        <p className="mt-2 text-xs text-gray-400 pl-[60px]">{member.specialization}</p>
       )}
     </div>
   );
 }
 
-// Project Card Component with Enhanced UI
+// Project Card Component
 function ProjectCard({ project, onClick }) {
   const statusColors = {
     active: 'bg-green-100 text-green-700',
@@ -216,10 +211,7 @@ function ProjectCard({ project, onClick }) {
   };
 
   return (
-    <div
-      onClick={onClick}
-      className="project-card-enhanced"
-    >
+    <div onClick={onClick} className="project-card-enhanced">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="font-semibold text-gray-900">{project.projectName || project.businessName}</h3>
@@ -283,7 +275,6 @@ function ProjectRow({ project, onClick }) {
       onClick={onClick}
       className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
     >
-      {/* Project Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-gray-900 truncate">{project.projectName || project.businessName}</h3>
@@ -295,20 +286,14 @@ function ProjectRow({ project, onClick }) {
         </div>
         <p className="text-sm text-gray-500 truncate">{project.customerName}</p>
       </div>
-
-      {/* Industry */}
       <div className="hidden md:block w-32">
         <span className="text-sm text-gray-600">{project.industry || '-'}</span>
       </div>
-
-      {/* Status */}
       <div className="flex items-center gap-2">
         <Badge className={cn('text-xs', statusColors[project.status])}>
           {statusLabels[project.status] || project.status}
         </Badge>
       </div>
-
-      {/* Progress */}
       <div className="hidden lg:flex items-center gap-3 w-40">
         <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
@@ -323,8 +308,6 @@ function ProjectRow({ project, onClick }) {
         </div>
         <span className="text-sm font-medium text-gray-900 w-10 text-right">{project.overallProgress}%</span>
       </div>
-
-      {/* Arrow */}
       <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
     </div>
   );
@@ -351,18 +334,8 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
 
   return (
     <ModalPortal>
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50 z-[9998]"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      {/* Modal */}
-      <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
-        aria-modal="true"
-        role="dialog"
-      >
+      <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={onClose} aria-hidden="true" />
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none" aria-modal="true" role="dialog">
         <div
           className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden pointer-events-auto"
           onClick={(e) => e.stopPropagation()}
@@ -382,7 +355,6 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
           </div>
 
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-            {/* Stage Progress */}
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Stage Progress</h3>
               <div className="grid grid-cols-6 gap-2">
@@ -390,9 +362,7 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
                   <div key={stage.key} className="text-center">
                     <div className={cn(
                       'w-8 h-8 rounded-full mx-auto flex items-center justify-center text-sm font-medium',
-                      stage.isCompleted
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-400'
+                      stage.isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'
                     )}>
                       {stage.isCompleted ? <CheckCircle size={16} /> : index + 1}
                     </div>
@@ -402,7 +372,6 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
               </div>
             </div>
 
-            {/* Market Research Summary */}
             {strategy.stages.marketResearch?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Market Research</h4>
@@ -431,7 +400,6 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
               </div>
             )}
 
-            {/* Offer Engineering Summary */}
             {strategy.stages.offerEngineering?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Offer Engineering</h4>
@@ -446,7 +414,6 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
               </div>
             )}
 
-            {/* Traffic Strategy Summary */}
             {strategy.stages.trafficStrategy?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Traffic Strategy</h4>
@@ -464,7 +431,6 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
               </div>
             )}
 
-            {/* Landing Page Summary */}
             {strategy.stages.landingPage?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Landing Page</h4>
@@ -479,7 +445,6 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
               </div>
             )}
 
-            {/* Creative Strategy Summary */}
             {strategy.stages.creativeStrategy?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Creative Strategy</h4>
@@ -494,43 +459,30 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
               </div>
             )}
 
-            {/* Team */}
             <div className="mt-6 pt-4 border-t border-gray-200">
               <h4 className="font-medium text-gray-900 mb-3">Assigned Team</h4>
               <div className="flex flex-wrap gap-3">
                 {strategy.project.assignedTeam?.performanceMarketer && (
-                  <Badge className="bg-blue-100 text-blue-700">
-                    PM: {strategy.project.assignedTeam.performanceMarketer.name}
-                  </Badge>
+                  <Badge className="bg-blue-100 text-blue-700">PM: {strategy.project.assignedTeam.performanceMarketer.name}</Badge>
                 )}
                 {strategy.project.assignedTeam?.uiUxDesigner && (
-                  <Badge className="bg-purple-100 text-purple-700">
-                    UI/UX: {strategy.project.assignedTeam.uiUxDesigner.name}
-                  </Badge>
+                  <Badge className="bg-purple-100 text-purple-700">UI/UX: {strategy.project.assignedTeam.uiUxDesigner.name}</Badge>
                 )}
                 {strategy.project.assignedTeam?.graphicDesigner && (
-                  <Badge className="bg-pink-100 text-pink-700">
-                    Design: {strategy.project.assignedTeam.graphicDesigner.name}
-                  </Badge>
+                  <Badge className="bg-pink-100 text-pink-700">Design: {strategy.project.assignedTeam.graphicDesigner.name}</Badge>
                 )}
                 {strategy.project.assignedTeam?.developer && (
-                  <Badge className="bg-green-100 text-green-700">
-                    Dev: {strategy.project.assignedTeam.developer.name}
-                  </Badge>
+                  <Badge className="bg-green-100 text-green-700">Dev: {strategy.project.assignedTeam.developer.name}</Badge>
                 )}
                 {strategy.project.assignedTeam?.tester && (
-                  <Badge className="bg-orange-100 text-orange-700">
-                    QA: {strategy.project.assignedTeam.tester.name}
-                  </Badge>
+                  <Badge className="bg-orange-100 text-orange-700">QA: {strategy.project.assignedTeam.tester.name}</Badge>
                 )}
               </div>
             </div>
           </div>
 
           <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
+            <Button variant="outline" onClick={onClose}>Close</Button>
             <Button onClick={handleReview} loading={reviewing}>
               <CheckSquare size={16} className="mr-2" />
               Mark as Reviewed
@@ -560,7 +512,7 @@ export default function AdminDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [projectViewMode, setProjectViewMode] = useState('card'); // 'card' or 'list'
+  const [projectViewMode, setProjectViewMode] = useState('card');
   const [stats, setStats] = useState({
     totalProjects: 0,
     activeProjects: 0,
@@ -568,11 +520,7 @@ export default function AdminDashboardPage() {
     recentProjects: [],
   });
   const [teamMembers, setTeamMembers] = useState([]);
-  const [teamStats, setTeamStats] = useState({
-    total: 0,
-    byRole: {},
-    available: 0,
-  });
+  const [teamStats, setTeamStats] = useState({ total: 0, byRole: {}, available: 0 });
   const [notifications, setNotifications] = useState([]);
   const [strategyNotifications, setStrategyNotifications] = useState([]);
   const [selectedStrategy, setSelectedStrategy] = useState(null);
@@ -593,29 +541,21 @@ export default function AdminDashboardPage() {
 
       setStats(dashboardRes.data);
 
-      // Calculate team statistics
       const members = teamRes.data || [];
       setTeamMembers(members);
 
       const teamByRole = {};
       let availableCount = 0;
-
       members.forEach(member => {
         teamByRole[member.role] = (teamByRole[member.role] || 0) + 1;
         if (member.availability === 'available') availableCount++;
       });
 
-      setTeamStats({
-        total: members.length,
-        byRole: teamByRole,
-        available: availableCount,
-      });
+      setTeamStats({ total: members.length, byRole: teamByRole, available: availableCount });
 
-      // Filter strategy completion notifications
       const allNotifications = notifRes.data || [];
       setNotifications(allNotifications);
       setStrategyNotifications(allNotifications.filter(n => n.type === 'strategy_completed'));
-
     } catch (error) {
       toast.error('Failed to load dashboard data');
     } finally {
@@ -647,7 +587,6 @@ export default function AdminDashboardPage() {
     fetchData();
   };
 
-  // Prepare pie chart data for tasks by status
   const getTaskStatusData = () => {
     return [
       { name: 'Active Projects', value: stats.activeProjects, color: CHART_COLORS.success },
@@ -656,7 +595,6 @@ export default function AdminDashboardPage() {
     ].filter(item => item.value > 0);
   };
 
-  // Prepare bar chart data for team by role
   const getTeamByRoleData = () => {
     const roleLabels = {
       admin: 'Admin',
@@ -668,11 +606,9 @@ export default function AdminDashboardPage() {
       developer: 'Developers',
       tester: 'Testers',
     };
-
     return Object.entries(teamStats.byRole).map(([role, count]) => ({
       name: roleLabels[role] || role,
       count,
-      color: ROLE_ICONS[role]?.gradient ? `url(#gradient-${role})` : CHART_COLORS.gray,
     }));
   };
 
@@ -692,61 +628,12 @@ export default function AdminDashboardPage() {
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Admin Dashboard
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
           <p className="text-gray-500 mt-1">
             Welcome back, {user?.name?.split(' ')[0] || 'Admin'}! Here's your team overview.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* <div className="relative">
-            {strategyNotifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                {strategyNotifications.length}
-              </span>
-            )}
-
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
-                <div className="p-4 border-b border-gray-100">
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {strategyNotifications.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      No new notifications
-                    </div>
-                  ) : (
-                    strategyNotifications.map((notification) => (
-                      <div
-                        key={notification._id}
-                        className="p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
-                        onClick={() => {
-                          handleViewStrategy(notification);
-                          setShowNotifications(false);
-                        }}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 bg-green-100 rounded-lg">
-                            <CheckCircle size={16} className="text-green-600" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                            <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {formatDate(notification.createdAt)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div> */}
-
           <Button variant="outline" onClick={() => navigate('/team')}>
             <Users size={18} className="mr-2" />
             Manage Team
@@ -756,32 +643,6 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
       </div>
-
-      {/* Strategy Completion Alerts */}
-      {strategyNotifications.length > 0 && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle size={20} className="text-green-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-green-800">
-                {strategyNotifications.length} Strategy{strategyNotifications.length > 1 ? 's' : ''} Completed
-              </h3>
-              <p className="text-sm text-green-600">
-                {strategyNotifications.map(n => n.projectId?.projectName || n.projectId?.businessName).join(', ')}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => handleViewStrategy(strategyNotifications[0])}
-            >
-              <Eye size={16} className="mr-2" />
-              Review
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -817,7 +678,7 @@ export default function AdminDashboardPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pie Chart - Project Status Distribution */}
+        {/* Pie Chart */}
         <div className="lg:col-span-1 chart-container-enhanced">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary-400 to-primary-500">
@@ -858,11 +719,8 @@ export default function AdminDashboardPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-56 flex items-center justify-center text-gray-400">
-              No project data
-            </div>
+            <div className="h-56 flex items-center justify-center text-gray-400">No project data</div>
           )}
-          {/* Legend */}
           <div className="flex flex-wrap justify-center gap-4 mt-4 pt-4 border-t border-gray-100">
             {taskStatusData.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -874,7 +732,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Bar Chart - Team by Role */}
+        {/* Bar Chart */}
         <div className="lg:col-span-2 chart-container-enhanced">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -913,9 +771,7 @@ export default function AdminDashboardPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-400">
-              No team data available
-            </div>
+            <div className="h-64 flex items-center justify-center text-gray-400">No team data available</div>
           )}
         </div>
       </div>
@@ -931,7 +787,6 @@ export default function AdminDashboardPage() {
                 <p className="text-sm text-gray-500 mt-1">Latest project activity</p>
               </div>
               <div className="flex items-center gap-3">
-                {/* View Toggle */}
                 <div className="flex items-center bg-gray-100 rounded-lg p-1">
                   <button
                     onClick={() => setProjectViewMode('card')}
@@ -958,10 +813,7 @@ export default function AdminDashboardPage() {
                     <span className="hidden sm:inline">List</span>
                   </button>
                 </div>
-                <Link
-                  to="/projects"
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                >
+                <Link to="/projects" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                   View All
                 </Link>
               </div>
