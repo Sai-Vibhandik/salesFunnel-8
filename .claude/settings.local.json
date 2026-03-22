@@ -51,7 +51,11 @@
       "Bash(node:*)",
       "Bash(netstat:*)",
       "Bash(taskkill:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(findstr :5001)",
+      "Bash(findstr LISTENING)",
+      "Bash(findstr :500)"
     ]
   }
 }

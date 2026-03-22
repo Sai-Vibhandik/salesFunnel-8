@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { projectService, taskService } from '@/services/api';
 import { Card, CardBody, Badge, Spinner, Button } from '@/components/ui';
 import {
-  FileText,
+  Palette,
   FolderKanban,
   Clock,
   Send,
@@ -13,13 +13,12 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Eye,
-  Edit,
+  Figma,
   ChevronRight,
   PieChart as PieChartIcon,
   BarChart3,
   AlertCircle,
-  PenTool,
-  Sparkles,
+  Monitor,
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import {
@@ -35,24 +34,26 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Status configuration for content writer workflow
+// Status configuration for UI/UX workflow
 const STATUS_CONFIG = {
-  content_pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', chartColor: '#F59E0B' },
-  content_submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-700', chartColor: '#3B82F6' },
-  content_final_approved: { label: 'Approved', color: 'bg-green-100 text-green-700', chartColor: '#10B981' },
-  content_rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', chartColor: '#EF4444' },
+  design_pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', chartColor: '#F59E0B' },
+  design_submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-700', chartColor: '#3B82F6' },
+  design_approved: { label: 'Approved', color: 'bg-green-100 text-green-700', chartColor: '#10B981' },
+  design_rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', chartColor: '#EF4444' },
+  development_pending: { label: 'Dev Pending', color: 'bg-purple-100 text-purple-700', chartColor: '#8B5CF6' },
+  development_submitted: { label: 'Dev Review', color: 'bg-cyan-100 text-cyan-700', chartColor: '#06B6D4' },
+  development_approved: { label: 'Dev Approved', color: 'bg-emerald-100 text-emerald-700', chartColor: '#059669' },
+  final_approved: { label: 'Completed', color: 'bg-green-100 text-green-700', chartColor: '#10B981' },
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700', chartColor: '#F59E0B' },
   submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-700', chartColor: '#3B82F6' },
   approved: { label: 'Approved', color: 'bg-green-100 text-green-700', chartColor: '#10B981' },
-  approved_by_tester: { label: 'Tester Approved', color: 'bg-purple-100 text-purple-700', chartColor: '#8B5CF6' },
-  final_approved: { label: 'Final Approved', color: 'bg-emerald-100 text-emerald-700', chartColor: '#059669' },
   rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', chartColor: '#EF4444' },
   in_progress: { label: 'In Progress', color: 'bg-purple-100 text-purple-700', chartColor: '#8B5CF6' },
   todo: { label: 'To Do', color: 'bg-gray-100 text-gray-700', chartColor: '#6B7280' },
 };
 
 
-// Stat Card Component (matching Admin dashboard style)
+// Stat Card Component
 function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
   const isPositive = changeType === 'positive';
   return (
@@ -83,19 +84,9 @@ function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
   );
 }
 
-// Task Card Component with hover effects
+// Task Card Component
 function TaskCard({ task, onClick }) {
   const statusConfig = STATUS_CONFIG[task.status] || STATUS_CONFIG.todo;
-  const creativeTypeLabels = {
-    BLOG: 'Blog Post',
-    AD_COPY: 'Ad Copy',
-    EMAIL: 'Email',
-    HEADLINE: 'Headline',
-    DESCRIPTION: 'Description',
-    SCRIPT: 'Video Script',
-    SOCIAL: 'Social Media',
-    CASE_STUDY: 'Case Study',
-  };
 
   return (
     <div
@@ -108,29 +99,15 @@ function TaskCard({ task, onClick }) {
             <Badge className={statusConfig.color}>
               {statusConfig.label}
             </Badge>
-            {task.creativeType && (
-              <Badge variant="outline" className="text-xs">
-                {creativeTypeLabels[task.creativeType] || task.creativeType}
-              </Badge>
-            )}
           </div>
           <h3 className="font-semibold text-gray-900 truncate">
-            {task.creativeName || task.taskTitle || 'Content Task'}
+            {task.creativeName || task.taskTitle || 'Design Task'}
           </h3>
           <p className="text-sm text-gray-500 truncate">
             {task.projectId?.projectName || task.projectId?.businessName || 'Unknown Project'}
           </p>
         </div>
       </div>
-
-      {/* Show content preview if available */}
-      {task.contentOutput?.headline && (
-        <div className="mb-3 p-2 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-500 line-clamp-2">
-            <span className="font-medium">Headline:</span> {task.contentOutput.headline}
-          </p>
-        </div>
-      )}
 
       <div className="flex items-center justify-between text-sm text-gray-500">
         <div className="flex items-center gap-1">
@@ -145,17 +122,18 @@ function TaskCard({ task, onClick }) {
   );
 }
 
-export default function ContentWriterDashboard({ user }) {
+export default function UIDesignerDashboard({ user }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [stats, setStats] = useState({
     totalTasks: 0,
-    pendingContent: 0,
-    inProgressContent: 0,
-    completedContent: 0,
-    rejectedContent: 0,
+    pendingDesigns: 0,
+    submittedDesigns: 0,
+    approvedDesigns: 0,
+    rejectedDesigns: 0,
+    inDevelopment: 0,
   });
 
   useEffect(() => {
@@ -189,41 +167,47 @@ export default function ContentWriterDashboard({ user }) {
   };
 
   const calculateStats = (taskList) => {
-    const pendingContent = taskList.filter(t =>
-      ['content_pending', 'pending', 'todo'].includes(t.status)
+    const pendingDesigns = taskList.filter(t =>
+      ['design_pending', 'pending', 'todo'].includes(t.status)
     ).length;
 
-    const inProgressContent = taskList.filter(t =>
-      ['content_submitted', 'submitted', 'in_progress'].includes(t.status)
+    const submittedDesigns = taskList.filter(t =>
+      ['design_submitted', 'submitted', 'in_progress'].includes(t.status)
     ).length;
 
-    // A task is completed for content writer if:
-    // 1. Status is content_final_approved (current stage)
-    // 2. OR contentCompletedAt is set (content was completed and task moved to next stage)
-    const completedContent = taskList.filter(t =>
-      t.contentCompletedAt ||
-      ['content_final_approved', 'approved', 'approved_by_tester', 'final_approved'].includes(t.status)
+    // A task is completed for UI/UX designer if:
+    // 1. Status is design_approved (current stage)
+    // 2. OR designCompletedAt is set (design was completed and task moved to development)
+    const approvedDesigns = taskList.filter(t =>
+      t.designCompletedAt ||
+      ['design_approved', 'approved', 'approved_by_tester', 'development_pending'].includes(t.status)
     ).length;
 
-    const rejectedContent = taskList.filter(t =>
-      ['content_rejected', 'rejected'].includes(t.status)
+    const rejectedDesigns = taskList.filter(t =>
+      ['design_rejected', 'rejected'].includes(t.status)
+    ).length;
+
+    const inDevelopment = taskList.filter(t =>
+      ['development_pending', 'development_submitted', 'development_approved', 'final_approved'].includes(t.status)
     ).length;
 
     setStats({
       totalTasks: taskList.length,
-      pendingContent,
-      inProgressContent,
-      completedContent,
-      rejectedContent,
+      pendingDesigns,
+      submittedDesigns,
+      approvedDesigns,
+      rejectedDesigns,
+      inDevelopment,
     });
   };
 
-  // Prepare pie chart data for content status (In Progress, Completed, Pending)
+  // Prepare pie chart data for design status distribution
   const getTaskStatusData = () => {
     const data = [
-      { name: 'Pending', value: stats.pendingContent, color: '#F59E0B' },
-      { name: 'In Progress', value: stats.inProgressContent, color: '#3B82F6' },
-      { name: 'Completed', value: stats.completedContent, color: '#10B981' },
+      { name: 'Pending', value: stats.pendingDesigns, color: '#F59E0B' },
+      { name: 'In Review', value: stats.submittedDesigns, color: '#3B82F6' },
+      { name: 'Approved', value: stats.approvedDesigns, color: '#10B981' },
+      { name: 'Rejected', value: stats.rejectedDesigns, color: '#EF4444' },
     ];
     return data.filter(item => item.value > 0);
   };
@@ -248,7 +232,7 @@ export default function ContentWriterDashboard({ user }) {
 
       projectTaskCount[projectId].total++;
 
-      if (['content_final_approved', 'approved', 'approved_by_tester', 'final_approved'].includes(task.status)) {
+      if (['design_approved', 'approved', 'development_pending', 'final_approved'].includes(task.status)) {
         projectTaskCount[projectId].completed++;
       }
     });
@@ -265,17 +249,17 @@ export default function ContentWriterDashboard({ user }) {
       }));
   };
 
-  // Get recent tasks for task overview section
+  // Get recent tasks
   const getRecentTasks = () => {
     return [...tasks]
       .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
       .slice(0, 6);
   };
 
-  // Get tasks needing attention (rejected or pending)
+  // Get tasks needing attention
   const getTasksNeedingAttention = () => {
     return tasks.filter(t =>
-      ['content_rejected', 'rejected', 'content_pending', 'pending'].includes(t.status)
+      ['design_rejected', 'rejected', 'design_pending', 'pending'].includes(t.status)
     ).slice(0, 3);
   };
 
@@ -297,13 +281,13 @@ export default function ContentWriterDashboard({ user }) {
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600">
-            <FileText size={24} className="text-white" />
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600">
+            <Palette size={24} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Content Writer Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">UI/UX Designer Dashboard</h1>
             <p className="text-gray-500 mt-1">
-              Welcome back, {user?.name?.split(' ')[0] || 'Writer'}! Here's your content creation overview.
+              Welcome back, {user?.name?.split(' ')[0] || 'Designer'}! Here's your design work overview.
             </p>
           </div>
         </div>
@@ -313,7 +297,7 @@ export default function ContentWriterDashboard({ user }) {
             Projects
           </Button>
           <Button onClick={() => navigate('/tasks')}>
-            <PenTool size={18} className="mr-2" />
+            <Clock size={18} className="mr-2" />
             My Tasks
           </Button>
         </div>
@@ -322,31 +306,31 @@ export default function ContentWriterDashboard({ user }) {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Content Tasks"
+          title="Total Tasks"
           value={String(stats.totalTasks)}
-          icon={FileText}
-          iconBg="bg-gradient-to-br from-emerald-400 to-emerald-600"
+          icon={Monitor}
+          iconBg="bg-gradient-to-br from-purple-400 to-purple-600"
         />
         <StatCard
-          title="Pending"
-          value={String(stats.pendingContent)}
-          change={stats.pendingContent > 0 ? `${stats.pendingContent} awaiting` : null}
+          title="Pending Designs"
+          value={String(stats.pendingDesigns)}
+          change={stats.pendingDesigns > 0 ? `${stats.pendingDesigns} awaiting` : null}
           changeType="neutral"
           icon={Clock}
           iconBg="bg-gradient-to-br from-yellow-400 to-yellow-600"
         />
         <StatCard
-          title="In Progress"
-          value={String(stats.inProgressContent)}
-          change={stats.inProgressContent > 0 ? 'Being written' : null}
+          title="In Review"
+          value={String(stats.submittedDesigns)}
+          change={stats.submittedDesigns > 0 ? 'Being reviewed' : null}
           changeType="neutral"
           icon={Send}
           iconBg="bg-gradient-to-br from-blue-400 to-blue-600"
         />
         <StatCard
-          title="Completed"
-          value={String(stats.completedContent)}
-          change={stats.completedContent > 0 ? '+this week' : null}
+          title="Approved"
+          value={String(stats.approvedDesigns)}
+          change={stats.approvedDesigns > 0 ? '+this week' : null}
           changeType="positive"
           icon={CheckCircle}
           iconBg="bg-gradient-to-br from-green-400 to-green-600"
@@ -355,15 +339,15 @@ export default function ContentWriterDashboard({ user }) {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pie Chart - Content Status */}
+        {/* Pie Chart - Design Status */}
         <div className="lg:col-span-1 chart-container-enhanced">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500">
               <PieChartIcon size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Content Progress</h3>
-              <p className="text-sm text-gray-500">Pending, In Progress & Completed</p>
+              <h3 className="font-semibold text-gray-900">Design Progress</h3>
+              <p className="text-sm text-gray-500">Status distribution</p>
             </div>
           </div>
 
@@ -417,7 +401,7 @@ export default function ContentWriterDashboard({ user }) {
             <div className="h-52 flex items-center justify-center text-sm text-gray-400">
               <div className="text-center">
                 <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p>No content progress data</p>
+                <p>No design tasks yet</p>
               </div>
             </div>
           )}
@@ -438,7 +422,7 @@ export default function ContentWriterDashboard({ user }) {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5">
                 <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-500" />
-                <span className="text-xs text-gray-500">Completed</span>
+                <span className="text-xs text-gray-500">Approved</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-500" />
@@ -479,7 +463,7 @@ export default function ContentWriterDashboard({ user }) {
                   />
                   <Tooltip
                     formatter={(value, name) => {
-                      const label = name === 'completed' ? 'Completed' : 'Pending';
+                      const label = name === 'completed' ? 'Approved' : 'Pending';
                       return [`${value} task${value !== 1 ? 's' : ''}`, label];
                     }}
                     contentStyle={{
@@ -513,13 +497,13 @@ export default function ContentWriterDashboard({ user }) {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-amber-100 rounded-lg">
-              <Sparkles size={20} className="text-amber-600" />
+              <AlertCircle size={20} className="text-amber-600" />
             </div>
             <div>
               <h3 className="font-medium text-amber-900">Tasks Needing Attention</h3>
               <p className="text-sm text-amber-600">
-                {stats.rejectedContent > 0 ? `${stats.rejectedContent} rejected, ` : ''}
-                {stats.pendingContent} pending content tasks
+                {stats.rejectedDesigns > 0 ? `${stats.rejectedDesigns} rejected, ` : ''}
+                {stats.pendingDesigns} pending design tasks
               </p>
             </div>
           </div>
@@ -551,12 +535,12 @@ export default function ContentWriterDashboard({ user }) {
       <div className="chart-container-enhanced">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-500">
-              <PenTool size={20} className="text-white" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500">
+              <Figma size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Recent Content Tasks</h3>
-              <p className="text-sm text-gray-500">Your writing assignments</p>
+              <h3 className="font-semibold text-gray-900">Recent Design Tasks</h3>
+              <p className="text-sm text-gray-500">Your UI/UX assignments</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => navigate('/tasks')}>
@@ -577,10 +561,10 @@ export default function ContentWriterDashboard({ user }) {
           </div>
         ) : (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No Content Tasks</h4>
+            <Palette className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+            <h4 className="text-lg font-medium text-gray-900 mb-2">No Design Tasks</h4>
             <p className="text-sm text-gray-500 mb-4">
-              You haven't been assigned any content tasks yet. Tasks will appear here once they're created.
+              You haven't been assigned any design tasks yet. Tasks will appear here once they're created.
             </p>
             <Button variant="outline" onClick={() => navigate('/projects')}>
               Browse Projects
@@ -589,59 +573,15 @@ export default function ContentWriterDashboard({ user }) {
         )}
       </div>
 
-      {/* Content Writing Tips */}
-      <div className="chart-container-enhanced">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500">
-            <Sparkles size={20} className="text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">Content Workflow</h3>
-            <p className="text-sm text-gray-500">How your content flows through the team</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <PenTool size={18} className="text-yellow-600" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">1. Write Content</p>
-              <p className="text-xs text-gray-500">Create compelling copy</p>
-            </div>
-          </div>
-          <ChevronRight size={20} className="text-gray-300" />
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Send size={18} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">2. Submit for Review</p>
-              <p className="text-xs text-gray-500">Tester reviews content</p>
-            </div>
-          </div>
-          <ChevronRight size={20} className="text-gray-300" />
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle size={18} className="text-green-600" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">3. Approved</p>
-              <p className="text-xs text-gray-500">Passed to designers</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
           onClick={() => navigate('/tasks')}
-          className="p-4 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl text-white text-left hover:shadow-lg transition-all duration-200"
+          className="p-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl text-white text-left hover:shadow-lg transition-all duration-200"
         >
-          <PenTool size={24} className="mb-2" />
+          <Figma size={24} className="mb-2" />
           <p className="font-semibold">View All Tasks</p>
-          <p className="text-sm text-white/80 mt-1">See all your writing assignments</p>
+          <p className="text-sm text-white/80 mt-1">See all your design assignments</p>
         </button>
         <button
           onClick={() => navigate('/projects')}
@@ -655,23 +595,23 @@ export default function ContentWriterDashboard({ user }) {
           onClick={() => navigate('/tasks?status=pending')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
-          <Edit size={24} className="mb-2 text-yellow-500" />
-          <p className="font-semibold">Start Writing</p>
-          <p className="text-sm text-gray-500 mt-1">Continue pending content</p>
+          <Clock size={24} className="mb-2 text-yellow-500" />
+          <p className="font-semibold">Pending Designs</p>
+          <p className="text-sm text-gray-500 mt-1">Continue pending work</p>
         </button>
       </div>
 
-      {/* Rejected Content Alert */}
-      {stats.rejectedContent > 0 && (
+      {/* Rejected Designs Alert */}
+      {stats.rejectedDesigns > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-100 rounded-lg">
               <XCircle size={20} className="text-red-600" />
             </div>
             <div>
-              <p className="font-medium text-red-900">Content Needs Revision</p>
+              <p className="font-medium text-red-900">Designs Need Revision</p>
               <p className="text-sm text-red-600">
-                You have {stats.rejectedContent} piece{stats.rejectedContent !== 1 ? 's' : ''} of content that need{stats.rejectedContent === 1 ? 's' : ''} revision.
+                You have {stats.rejectedDesigns} design{stats.rejectedDesigns !== 1 ? 's' : ''} that need{stats.rejectedDesigns === 1 ? 's' : ''} revision.
               </p>
             </div>
           </div>

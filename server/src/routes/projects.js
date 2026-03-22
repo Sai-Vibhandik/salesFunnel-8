@@ -18,7 +18,12 @@ const {
   getLandingPage,
   updateLandingPage,
   deleteLandingPage,
-  completeLandingPageStage
+  completeLandingPageStage,
+  // Vision Board & 10-Year Strategy
+  uploadVisionBoard,
+  deleteVisionBoardFile,
+  uploadTenYearStrategy,
+  deleteTenYearStrategyFile
 } = require('../controllers/projectController');
 const {
   getStrategySummary,
@@ -77,5 +82,13 @@ router.get('/:projectId/strategy-summary', getStrategySummary);
 router.get('/:projectId/strategy-summary/text', getStrategySummaryText);
 router.get('/:projectId/strategy-summary/pdf', getStrategySummaryPdf);
 router.get('/:projectId/strategy-summary/context', getTaskContext);
+
+// Vision Board Routes
+router.post('/:id/vision-board', authorize('admin', 'performance_marketer'), handleUpload(uploadBrandAssets), uploadVisionBoard);
+router.delete('/:id/vision-board/:fileId', authorize('admin', 'performance_marketer'), deleteVisionBoardFile);
+
+// 10-Year Strategy Routes
+router.post('/:id/ten-year-strategy', authorize('admin', 'performance_marketer'), handleUpload(uploadBrandAssets), uploadTenYearStrategy);
+router.delete('/:id/ten-year-strategy/:fileId', authorize('admin', 'performance_marketer'), deleteTenYearStrategyFile);
 
 module.exports = router;

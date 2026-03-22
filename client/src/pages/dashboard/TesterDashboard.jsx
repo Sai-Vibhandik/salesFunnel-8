@@ -186,152 +186,6 @@ function ReviewedTaskCard({ task }) {
   );
 }
 
-// Dummy data for showcase
-const DUMMY_PENDING_REVIEW = [
-  {
-    _id: 'review-1',
-    taskTitle: 'Homepage Banner Design',
-    taskType: 'graphic_design',
-    creativeName: 'Hero Banner - Summer Sale',
-    status: 'design_submitted',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page', businessName: 'TechCorp' },
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'review-2',
-    taskTitle: 'Product Video Edit',
-    taskType: 'video_editing',
-    creativeName: 'Product Demo Video',
-    status: 'submitted',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page', businessName: 'TechCorp' },
-    updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'review-3',
-    taskTitle: 'Blog Content Writing',
-    taskType: 'content_writing',
-    creativeName: '10 Tips for Better UX',
-    status: 'content_submitted',
-    projectId: { _id: 'proj-2', projectName: 'Fitness Pro Website', businessName: 'Fitness Pro' },
-    updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'review-4',
-    taskTitle: 'Landing Page Code Review',
-    taskType: 'landing_page_development',
-    creativeName: 'Homepage Implementation',
-    status: 'development_submitted',
-    projectId: { _id: 'proj-2', projectName: 'Fitness Pro Website', businessName: 'Fitness Pro' },
-    updatedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'review-5',
-    taskTitle: 'Social Media Graphics',
-    taskType: 'graphic_design',
-    creativeName: 'Instagram Story Templates',
-    status: 'design_submitted',
-    projectId: { _id: 'proj-3', projectName: 'E-commerce Store', businessName: 'ShopNow' },
-    updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'review-6',
-    taskTitle: 'Email Newsletter Design',
-    taskType: 'graphic_design',
-    creativeName: 'Weekly Newsletter Template',
-    status: 'design_submitted',
-    projectId: { _id: 'proj-3', projectName: 'E-commerce Store', businessName: 'ShopNow' },
-    updatedAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const DUMMY_RECENTLY_REVIEWED = [
-  {
-    _id: 'reviewed-1',
-    taskTitle: 'Logo Design',
-    taskType: 'graphic_design',
-    creativeName: 'Company Logo Variations',
-    status: 'approved_by_tester',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page', businessName: 'TechCorp' },
-    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'reviewed-2',
-    taskTitle: 'Hero Image Design',
-    taskType: 'graphic_design',
-    creativeName: 'Hero Section Images',
-    status: 'approved_by_tester',
-    projectId: { _id: 'proj-2', projectName: 'Fitness Pro Website', businessName: 'Fitness Pro' },
-    updatedAt: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'reviewed-3',
-    taskTitle: 'Banner Design',
-    taskType: 'graphic_design',
-    creativeName: 'Promotional Banner',
-    status: 'rejected',
-    projectId: { _id: 'proj-3', projectName: 'E-commerce Store', businessName: 'ShopNow' },
-    updatedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'reviewed-4',
-    taskTitle: 'Feature Video',
-    taskType: 'video_editing',
-    creativeName: 'Product Feature Showcase',
-    status: 'approved_by_tester',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page', businessName: 'TechCorp' },
-    updatedAt: new Date(Date.now() - 60 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const DUMMY_MY_TASKS = [
-  {
-    _id: 'my-1',
-    taskTitle: 'Test Landing Page',
-    taskType: 'testing',
-    status: 'pending',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page' },
-    updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'my-2',
-    taskTitle: 'Mobile Responsive Test',
-    taskType: 'testing',
-    status: 'in_progress',
-    projectId: { _id: 'proj-2', projectName: 'Fitness Pro Website' },
-    updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const DUMMY_PROJECTS = [
-  {
-    _id: 'proj-1',
-    projectName: 'TechCorp Landing Page',
-    businessName: 'TechCorp',
-    customerName: 'John Smith',
-    status: 'active',
-    isActive: true,
-    overallProgress: 65,
-  },
-  {
-    _id: 'proj-2',
-    projectName: 'Fitness Pro Website',
-    businessName: 'Fitness Pro',
-    customerName: 'Sarah Johnson',
-    status: 'active',
-    isActive: true,
-    overallProgress: 80,
-  },
-  {
-    _id: 'proj-3',
-    projectName: 'E-commerce Store',
-    businessName: 'ShopNow',
-    customerName: 'Mike Davis',
-    status: 'active',
-    isActive: true,
-    overallProgress: 45,
-  },
-];
-
 export default function TesterDashboard({ user }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -339,7 +193,6 @@ export default function TesterDashboard({ user }) {
   const [recentlyReviewed, setRecentlyReviewed] = useState([]);
   const [myTasks, setMyTasks] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [useDummyData, setUseDummyData] = useState(false);
   const [stats, setStats] = useState({
     totalPending: 0,
     totalReviewed: 0,
@@ -367,34 +220,22 @@ export default function TesterDashboard({ user }) {
       const assignedTasks = myTasksRes.data || [];
       const allProjects = projectsRes.data || [];
 
-      // Check if we have real data, if not use dummy data
-      if (pendingTasks.length === 0) {
-        setUseDummyData(true);
-        setPendingReview(DUMMY_PENDING_REVIEW);
-        setRecentlyReviewed(DUMMY_RECENTLY_REVIEWED);
-        setMyTasks(DUMMY_MY_TASKS);
-        setProjects(DUMMY_PROJECTS);
-        calculateStats(DUMMY_PENDING_REVIEW, DUMMY_RECENTLY_REVIEWED, DUMMY_MY_TASKS);
-      } else {
-        setPendingReview(pendingTasks);
-        setMyTasks(assignedTasks);
-        setProjects(allProjects);
+      setPendingReview(pendingTasks);
+      setMyTasks(assignedTasks);
+      setProjects(allProjects);
 
-        const reviewed = pendingTasks.filter(t =>
-          ['approved_by_tester', 'approved', 'rejected'].includes(t.status)
-        ).slice(0, 5);
-        setRecentlyReviewed(reviewed);
-        calculateStats(pendingTasks, reviewed, assignedTasks);
-      }
+      const reviewed = pendingTasks.filter(t =>
+        ['approved_by_tester', 'approved', 'rejected'].includes(t.status)
+      ).slice(0, 5);
+      setRecentlyReviewed(reviewed);
+      calculateStats(pendingTasks, reviewed, assignedTasks);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
-      // Use dummy data on error
-      setUseDummyData(true);
-      setPendingReview(DUMMY_PENDING_REVIEW);
-      setRecentlyReviewed(DUMMY_RECENTLY_REVIEWED);
-      setMyTasks(DUMMY_MY_TASKS);
-      setProjects(DUMMY_PROJECTS);
-      calculateStats(DUMMY_PENDING_REVIEW, DUMMY_RECENTLY_REVIEWED, DUMMY_MY_TASKS);
+      setPendingReview([]);
+      setMyTasks([]);
+      setProjects([]);
+      setRecentlyReviewed([]);
+      calculateStats([], [], []);
     } finally {
       setLoading(false);
     }
@@ -557,11 +398,11 @@ export default function TesterDashboard({ user }) {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart - Review Status Distribution */}
-        <div className="lg:col-span-1 chart-container-enhanced">
+        <div className="chart-container-enhanced">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-400 to-orange-500">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600">
               <PieChartIcon size={20} className="text-white" />
             </div>
             <div>
@@ -570,67 +411,86 @@ export default function TesterDashboard({ user }) {
             </div>
           </div>
 
-          {/* Custom legend */}
-          <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4">
+          {/* Legend */}
+          <div className="flex flex-wrap gap-4 mb-4">
             {reviewStatusData.map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5">
+              <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50">
                 <span
-                  className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                  className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-xs text-gray-500">{item.name}</span>
-                <span className="text-xs font-semibold text-gray-900">{item.value}</span>
+                <span className="text-sm text-gray-600">{item.name}</span>
+                <span className="text-sm font-bold text-gray-900">{item.value}</span>
               </div>
             ))}
           </div>
 
           {reviewStatusData.length > 0 ? (
-            <div className="h-52">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
+                  <defs>
+                    {reviewStatusData.map((entry, index) => (
+                      <linearGradient key={`gradient-${index}`} id={`color-orange-${index}`} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={entry.color} stopOpacity={1} />
+                        <stop offset="100%" stopColor={entry.color} stopOpacity={0.7} />
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <Pie
                     data={reviewStatusData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={52}
-                    outerRadius={76}
-                    paddingAngle={3}
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={4}
                     dataKey="value"
-                    strokeWidth={0}
+                    strokeWidth={3}
+                    stroke="#fff"
                   >
                     {reviewStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={`url(#color-orange-${index})`} />
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value, name) => [value, name]}
+                    formatter={(value, name) => [`${value} task${value !== 1 ? 's' : ''}`, name]}
                     contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '10px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                      padding: '10px 14px',
-                      fontSize: '13px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                      padding: '12px 16px',
+                      fontSize: '14px',
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
+              {/* Center Label */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ marginTop: '-10px' }}>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalPending + stats.approvedCount + stats.rejectedCount}</div>
+                  <div className="text-sm text-gray-500">Total Reviews</div>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="h-52 flex items-center justify-center text-sm text-gray-400">
+            <div className="h-64 flex items-center justify-center">
               <div className="text-center">
-                <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p>No review data yet</p>
+                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                  <ClipboardCheck className="w-8 h-8 text-gray-300" />
+                </div>
+                <p className="text-gray-500 font-medium">No review data yet</p>
+                <p className="text-sm text-gray-400 mt-1">Tasks will appear here for review</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Bar Chart - Tasks by Type */}
-        <div className="lg:col-span-2 chart-container-enhanced">
-          <div className="flex items-center justify-between mb-6">
+        <div className="chart-container-enhanced">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600">
                 <BarChart3 size={20} className="text-white" />
               </div>
               <div>
@@ -639,22 +499,48 @@ export default function TesterDashboard({ user }) {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-gray-900">{stats.totalPending}</p>
-              <p className="text-sm text-gray-500">Total pending</p>
+              <div className="text-2xl font-bold text-orange-600">{stats.totalPending}</div>
+              <div className="text-xs text-gray-500">Total pending</div>
             </div>
           </div>
 
           {tasksByTypeData.length > 0 ? (
-            <div style={{ height: `${Math.max(tasksByTypeData.length * 42 + 60, 180)}px` }}>
+            <div style={{ height: `${Math.max(tasksByTypeData.length * 50 + 40, 200)}px` }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={tasksByTypeData}
                   layout="vertical"
-                  barSize={22}
-                  margin={{ left: 0, right: 28, top: 0, bottom: 0 }}
+                  barSize={28}
+                  margin={{ left: 10, right: 30, top: 10, bottom: 10 }}
                 >
+                  <defs>
+                    <linearGradient id="barGradient1" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#F59E0B" />
+                      <stop offset="100%" stopColor="#FBBF24" />
+                    </linearGradient>
+                    <linearGradient id="barGradient2" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#3B82F6" />
+                      <stop offset="100%" stopColor="#60A5FA" />
+                    </linearGradient>
+                    <linearGradient id="barGradient3" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#10B981" />
+                      <stop offset="100%" stopColor="#34D399" />
+                    </linearGradient>
+                    <linearGradient id="barGradient4" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#8B5CF6" />
+                      <stop offset="100%" stopColor="#A78BFA" />
+                    </linearGradient>
+                    <linearGradient id="barGradient5" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#EC4899" />
+                      <stop offset="100%" stopColor="#F472B6" />
+                    </linearGradient>
+                    <linearGradient id="barGradient6" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#06B6D4" />
+                      <stop offset="100%" stopColor="#22D3EE" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid
-                    strokeDasharray="3 3"
+                    strokeDasharray="4 4"
                     stroke="#f0f0f0"
                     horizontal={false}
                     vertical={true}
@@ -662,14 +548,14 @@ export default function TesterDashboard({ user }) {
                   <XAxis
                     type="number"
                     allowDecimals={false}
-                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     type="category"
                     dataKey="name"
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    tick={{ fill: '#374151', fontSize: 13, fontWeight: 500 }}
                     width={120}
                     axisLine={false}
                     tickLine={false}
@@ -677,29 +563,32 @@ export default function TesterDashboard({ user }) {
                   <Tooltip
                     formatter={(value) => [`${value} task${value !== 1 ? 's' : ''}`, 'Pending']}
                     contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '10px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                      padding: '10px 14px',
-                      fontSize: '13px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                      padding: '12px 16px',
+                      fontSize: '14px',
                     }}
-                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                    cursor={{ fill: 'rgba(0,0,0,0.03)' }}
                   />
-                  <Bar dataKey="count" radius={[0, 6, 6, 0]}>
+                  <Bar dataKey="count" radius={[0, 8, 8, 0]}>
                     {tasksByTypeData.map((entry, index) => {
-                      const colors = ['#F59E0B', '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#06B6D4'];
-                      return <Cell key={`bar-${index}`} fill={colors[index % colors.length]} />;
+                      const gradients = ['barGradient1', 'barGradient2', 'barGradient3', 'barGradient4', 'barGradient5', 'barGradient6'];
+                      return <Cell key={`bar-${index}`} fill={`url(#${gradients[index % gradients.length]})`} />;
                     })}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-48 flex items-center justify-center text-sm text-gray-400">
+            <div className="h-52 flex items-center justify-center">
               <div className="text-center">
-                <ClipboardCheck className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p>No pending reviews</p>
+                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle className="w-8 h-8 text-green-400" />
+                </div>
+                <p className="text-gray-500 font-medium">All caught up!</p>
+                <p className="text-sm text-gray-400 mt-1">No pending reviews</p>
               </div>
             </div>
           )}

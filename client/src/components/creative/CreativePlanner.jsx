@@ -774,14 +774,67 @@ export default function CreativePlanner({
       </div>
 
       {/* Add Creative Button */}
-      <Button
-        variant="outline"
-        onClick={addCreativeRow}
-        className="w-full py-3 border-dashed"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add Creative
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={addCreativeRow}
+          className="flex-1 py-3 border-dashed"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Creative
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            // Add all traffic ad types
+            const trafficCreatives = [];
+            const screenSizes = ['square', 'portrait', 'story'];
+
+            // Add Image creatives for traffic
+            trafficCreatives.push({
+              ...createEmptyCreative(),
+              name: 'Traffic - Image Ad',
+              adType: 'traffic',
+              creativeType: 'IMAGE',
+              subType: 'Problem Image',
+              screenSizes: screenSizes,
+            });
+
+            // Add Video creatives for traffic
+            trafficCreatives.push({
+              ...createEmptyCreative(),
+              name: 'Traffic - Video Ad',
+              adType: 'traffic',
+              creativeType: 'VIDEO',
+              subType: 'Problem Hook',
+              screenSizes: screenSizes,
+            });
+
+            // Add Carousel creatives for traffic
+            trafficCreatives.push({
+              ...createEmptyCreative(),
+              name: 'Traffic - Carousel Ad',
+              adType: 'traffic',
+              creativeType: 'CAROUSEL',
+              subType: 'Feature Carousel',
+              screenSizes: screenSizes,
+            });
+
+            setCreativePlan(prev => [...prev, ...trafficCreatives]);
+
+            // Expand all new cards
+            const newExpanded = {};
+            trafficCreatives.forEach(c => {
+              newExpanded[c._id] = true;
+            });
+            setExpandedCards(prev => ({ ...prev, ...newExpanded }));
+          }}
+          className="py-3 border-dashed bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+        >
+          <MousePointer className="w-4 h-4 mr-2" />
+          Add All Traffic Ads
+        </Button>
+      </div>
 
       {/* Additional Notes */}
       <Card>

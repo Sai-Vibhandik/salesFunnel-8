@@ -123,139 +123,13 @@ function TaskCard({ task, onClick }) {
   );
 }
 
-// Dummy data for showcase
-const DUMMY_TASKS = [
-  {
-    _id: 'gd-1',
-    taskTitle: 'Homepage Banner Design',
-    taskType: 'graphic_design',
-    creativeName: 'Hero Banner - Summer Sale',
-    creativeType: 'IMAGE',
-    status: 'design_pending',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page', businessName: 'TechCorp' },
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'gd-2',
-    taskTitle: 'Product Showcase Graphics',
-    taskType: 'graphic_design',
-    creativeName: 'Product Feature Images',
-    creativeType: 'IMAGE',
-    status: 'design_submitted',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page', businessName: 'TechCorp' },
-    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'gd-3',
-    taskTitle: 'Social Media Graphics',
-    taskType: 'graphic_design',
-    creativeName: 'Instagram Story Templates',
-    creativeType: 'IMAGE',
-    status: 'design_approved',
-    projectId: { _id: 'proj-2', projectName: 'Fitness Pro Website', businessName: 'Fitness Pro' },
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'gd-4',
-    taskTitle: 'Email Header Design',
-    taskType: 'graphic_design',
-    creativeName: 'Newsletter Header Image',
-    creativeType: 'IMAGE',
-    status: 'design_pending',
-    projectId: { _id: 'proj-2', projectName: 'Fitness Pro Website', businessName: 'Fitness Pro' },
-    updatedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'gd-5',
-    taskTitle: 'Facebook Ad Creatives',
-    taskType: 'graphic_design',
-    creativeName: 'FB Ad - Winter Collection',
-    creativeType: 'IMAGE',
-    status: 'rejected',
-    projectId: { _id: 'proj-3', projectName: 'E-commerce Store', businessName: 'ShopNow' },
-    updatedAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'gd-6',
-    taskTitle: 'Carousel Post Design',
-    taskType: 'graphic_design',
-    creativeName: 'Product Benefits Carousel',
-    creativeType: 'CAROUSEL',
-    status: 'design_approved',
-    projectId: { _id: 'proj-3', projectName: 'E-commerce Store', businessName: 'ShopNow' },
-    updatedAt: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'gd-7',
-    taskTitle: 'Promotional Banner',
-    taskType: 'graphic_design',
-    creativeName: 'Black Friday Banner',
-    creativeType: 'IMAGE',
-    status: 'design_submitted',
-    projectId: { _id: 'proj-1', projectName: 'TechCorp Landing Page', businessName: 'TechCorp' },
-    updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    _id: 'gd-8',
-    taskTitle: 'App Store Screenshots',
-    taskType: 'graphic_design',
-    creativeName: 'App Preview Images',
-    creativeType: 'IMAGE',
-    status: 'design_approved',
-    projectId: { _id: 'proj-4', projectName: 'Mobile App Launch', businessName: 'AppStart' },
-    updatedAt: new Date(Date.now() - 96 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const DUMMY_PROJECTS = [
-  {
-    _id: 'proj-1',
-    projectName: 'TechCorp Landing Page',
-    businessName: 'TechCorp',
-    customerName: 'John Smith',
-    status: 'active',
-    isActive: true,
-    overallProgress: 65,
-    industry: 'Technology',
-  },
-  {
-    _id: 'proj-2',
-    projectName: 'Fitness Pro Website',
-    businessName: 'Fitness Pro',
-    customerName: 'Sarah Johnson',
-    status: 'active',
-    isActive: true,
-    overallProgress: 80,
-    industry: 'Health & Fitness',
-  },
-  {
-    _id: 'proj-3',
-    projectName: 'E-commerce Store',
-    businessName: 'ShopNow',
-    customerName: 'Mike Davis',
-    status: 'active',
-    isActive: true,
-    overallProgress: 45,
-    industry: 'E-commerce',
-  },
-  {
-    _id: 'proj-4',
-    projectName: 'Mobile App Launch',
-    businessName: 'AppStart',
-    customerName: 'Emily Chen',
-    status: 'active',
-    isActive: true,
-    overallProgress: 90,
-    industry: 'Technology',
-  },
-];
+;
 
 export default function GraphicDesignerDashboard({ user }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [useDummyData, setUseDummyData] = useState(false);
   const [stats, setStats] = useState({
     totalTasks: 0,
     pendingDesigns: 0,
@@ -281,24 +155,14 @@ export default function GraphicDesignerDashboard({ user }) {
       const assignedTasks = tasksRes.data || [];
       const assignedProjects = projectsRes.data || [];
 
-      // Check if we have real data, if not use dummy data
-      if (assignedTasks.length === 0 && assignedProjects.length === 0) {
-        setUseDummyData(true);
-        setTasks(DUMMY_TASKS);
-        setProjects(DUMMY_PROJECTS);
-        calculateStats(DUMMY_TASKS);
-      } else {
-        setTasks(assignedTasks);
-        setProjects(assignedProjects);
-        calculateStats(assignedTasks);
-      }
+      setTasks(assignedTasks);
+      setProjects(assignedProjects);
+      calculateStats(assignedTasks);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
-      // Use dummy data on error
-      setUseDummyData(true);
-      setTasks(DUMMY_TASKS);
-      setProjects(DUMMY_PROJECTS);
-      calculateStats(DUMMY_TASKS);
+      setTasks([]);
+      setProjects([]);
+      calculateStats([]);
     } finally {
       setLoading(false);
     }
@@ -313,7 +177,11 @@ export default function GraphicDesignerDashboard({ user }) {
       ['design_submitted', 'submitted', 'in_progress'].includes(t.status)
     ).length;
 
+    // A task is completed for designer if:
+    // 1. Status is design_approved (current stage)
+    // 2. OR designCompletedAt is set (design was completed and task moved to next stage)
     const approvedDesigns = taskList.filter(t =>
+      t.designCompletedAt ||
       ['design_approved', 'approved', 'approved_by_tester', 'final_approved'].includes(t.status)
     ).length;
 
@@ -459,11 +327,11 @@ export default function GraphicDesignerDashboard({ user }) {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart - Task Status Distribution */}
-        <div className="lg:col-span-1 chart-container-enhanced">
+        <div className="chart-container-enhanced">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-400 to-pink-500">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-400 to-rose-500">
               <PieChartIcon size={20} className="text-white" />
             </div>
             <div>
@@ -472,97 +340,136 @@ export default function GraphicDesignerDashboard({ user }) {
             </div>
           </div>
 
-          {/* Custom legend */}
-          <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4">
+          {/* Legend */}
+          <div className="flex flex-wrap gap-4 mb-4">
             {taskStatusData.map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5">
+              <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50">
                 <span
-                  className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                  className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-xs text-gray-500">{item.name}</span>
-                <span className="text-xs font-semibold text-gray-900">{item.value}</span>
+                <span className="text-sm text-gray-600">{item.name}</span>
+                <span className="text-sm font-bold text-gray-900">{item.value}</span>
               </div>
             ))}
           </div>
 
           {taskStatusData.length > 0 ? (
-            <div className="h-52">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
+                  <defs>
+                    {taskStatusData.map((entry, index) => (
+                      <linearGradient key={`gradient-${index}`} id={`color-pink-${index}`} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={entry.color} stopOpacity={1} />
+                        <stop offset="100%" stopColor={entry.color} stopOpacity={0.7} />
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <Pie
                     data={taskStatusData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={52}
-                    outerRadius={76}
-                    paddingAngle={3}
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={4}
                     dataKey="value"
-                    strokeWidth={0}
+                    strokeWidth={3}
+                    stroke="#fff"
                   >
                     {taskStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={`url(#color-pink-${index})`} />
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value, name) => [value, name]}
+                    formatter={(value, name) => [`${value} task${value !== 1 ? 's' : ''}`, name]}
                     contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '10px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                      padding: '10px 14px',
-                      fontSize: '13px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                      padding: '12px 16px',
+                      fontSize: '14px',
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
+              {/* Center Label */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ marginTop: '-10px' }}>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-900">{stats.totalTasks}</div>
+                  <div className="text-sm text-gray-500">Total Tasks</div>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="h-52 flex items-center justify-center text-sm text-gray-400">
+            <div className="h-64 flex items-center justify-center">
               <div className="text-center">
-                <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p>No design tasks yet</p>
+                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                  <Image className="w-8 h-8 text-gray-300" />
+                </div>
+                <p className="text-gray-500 font-medium">No design tasks yet</p>
+                <p className="text-sm text-gray-400 mt-1">Tasks will appear here once assigned</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Bar Chart - Tasks per Project */}
-        <div className="lg:col-span-2 chart-container-enhanced">
-          <div className="flex items-center justify-between mb-6">
+        <div className="chart-container-enhanced">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-400 to-purple-600">
                 <BarChart3 size={20} className="text-white" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">Tasks by Project</h3>
-                <p className="text-sm text-gray-500">Completed vs pending</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-500" />
-                <span className="text-xs text-gray-500">Completed</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-500" />
-                <span className="text-xs text-gray-500">Pending</span>
+                <p className="text-sm text-gray-500">Workload distribution</p>
               </div>
             </div>
           </div>
 
+          {/* Legend */}
+          <div className="flex items-center gap-6 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-3 rounded-sm bg-gradient-to-r from-emerald-400 to-emerald-500" />
+              <span className="text-sm text-gray-600">Approved</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-3 rounded-sm bg-gradient-to-r from-blue-400 to-blue-500" />
+              <span className="text-sm text-gray-600">In Review</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-3 rounded-sm bg-gradient-to-r from-amber-400 to-amber-500" />
+              <span className="text-sm text-gray-600">Pending</span>
+            </div>
+          </div>
+
           {tasksPerProjectData.length > 0 ? (
-            <div style={{ height: `${Math.max(tasksPerProjectData.length * 42 + 60, 180)}px` }}>
+            <div style={{ height: `${Math.max(tasksPerProjectData.length * 50 + 40, 200)}px` }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={tasksPerProjectData}
                   layout="vertical"
-                  barSize={22}
-                  margin={{ left: 0, right: 28, top: 0, bottom: 0 }}
+                  barSize={28}
+                  margin={{ left: 10, right: 30, top: 10, bottom: 10 }}
                 >
+                  <defs>
+                    <linearGradient id="approvedGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#10B981" />
+                      <stop offset="100%" stopColor="#34D399" />
+                    </linearGradient>
+                    <linearGradient id="reviewGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#3B82F6" />
+                      <stop offset="100%" stopColor="#60A5FA" />
+                    </linearGradient>
+                    <linearGradient id="pendingDesignGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#F59E0B" />
+                      <stop offset="100%" stopColor="#FBBF24" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid
-                    strokeDasharray="3 3"
+                    strokeDasharray="4 4"
                     stroke="#f0f0f0"
                     horizontal={false}
                     vertical={true}
@@ -570,43 +477,46 @@ export default function GraphicDesignerDashboard({ user }) {
                   <XAxis
                     type="number"
                     allowDecimals={false}
-                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                    tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     type="category"
                     dataKey="name"
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                    width={100}
+                    tick={{ fill: '#374151', fontSize: 13, fontWeight: 500 }}
+                    width={90}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     formatter={(value, name) => {
-                      const label = name === 'completed' ? 'Completed' : 'Pending';
+                      const label = name === 'completed' ? 'Approved' : name === 'pending' ? 'Pending' : 'In Review';
                       return [`${value} task${value !== 1 ? 's' : ''}`, label];
                     }}
                     contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '10px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                      padding: '10px 14px',
-                      fontSize: '13px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                      padding: '12px 16px',
+                      fontSize: '14px',
                     }}
-                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                    cursor={{ fill: 'rgba(0,0,0,0.03)' }}
                   />
-                  <Bar dataKey="completed" stackId="a" fill="#10B981" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="pending" stackId="a" fill="#F59E0B" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="completed" stackId="a" fill="url(#approvedGradient)" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="pending" stackId="a" fill="url(#pendingDesignGradient)" radius={[0, 8, 8, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-48 flex items-center justify-center text-sm text-gray-400">
+            <div className="h-52 flex items-center justify-center">
               <div className="text-center">
-                <FolderKanban className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p>No project data available</p>
+                <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+                  <FolderKanban className="w-8 h-8 text-gray-300" />
+                </div>
+                <p className="text-gray-500 font-medium">No project data available</p>
+                <p className="text-sm text-gray-400 mt-1">Projects will appear here</p>
               </div>
             </div>
           )}

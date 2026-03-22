@@ -6,6 +6,8 @@ import GraphicDesignerDashboard from './GraphicDesignerDashboard';
 import DeveloperDashboard from './DeveloperDashboard';
 import TesterDashboard from './TesterDashboard';
 import ContentWriterDashboard from './ContentWriterDashboard';
+import UIDesignerDashboard from './UIDesignerDashboard';
+import VideoEditorDashboard from './VideoEditorDashboard';
 
 // Main Dashboard Page - Routes to role-specific dashboard
 export default function DashboardPage() {
@@ -26,9 +28,10 @@ export default function DashboardPage() {
     case 'content_writer':
     case 'content_creator':
       return <ContentWriterDashboard user={user} />;
-    case 'video_editor':
     case 'ui_ux_designer':
-      return <TeamMemberDashboard user={user} />;
+      return <UIDesignerDashboard user={user} />;
+    case 'video_editor':
+      return <VideoEditorDashboard user={user} />;
     default:
       // Fallback to team member dashboard for unknown team roles
       return <TeamMemberDashboard user={user} />;

@@ -7,16 +7,17 @@ import { Card, CardBody, CardHeader, Button, Badge, Spinner } from '@/components
 import ProjectSummary from './ProjectSummary';
 import {
   ArrowLeft, ClipboardList, Play, CheckCircle, Clock,
-  Eye, Palette, Code
+  Eye, Palette, Code, FileText, Video, PenTool, Send,
+  XCircle, AlertCircle
 } from 'lucide-react';
 
 const TASK_TYPES = {
   graphic_design: { label: 'Graphic Design', icon: Palette },
-  video_editing: { label: 'Video Editing', icon: Palette },
+  video_editing: { label: 'Video Editing', icon: Video },
   landing_page_design: { label: 'Landing Page Design', icon: Eye },
   landing_page_development: { label: 'Landing Page Development', icon: Code },
-  content_creation: { label: 'Content Creation', icon: ClipboardList },
-  content_writing: { label: 'Content Writing', icon: ClipboardList },
+  content_creation: { label: 'Content Creation', icon: FileText },
+  content_writing: { label: 'Content Writing', icon: PenTool },
 };
 
 const STATUS_CONFIG = {
@@ -26,18 +27,18 @@ const STATUS_CONFIG = {
   approved_by_tester: { label: 'Tester Approved', color: 'bg-purple-100 text-purple-800' },
   final_approved: { label: 'Completed', color: 'bg-green-100 text-green-800' },
   rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800' },
-  content_pending: { label: 'Content Pending', color: 'bg-orange-100 text-orange-800' },
-  content_submitted: { label: 'Content Submitted', color: 'bg-yellow-100 text-yellow-800' },
-  content_approved: { label: 'Content Approved', color: 'bg-purple-100 text-purple-800' },
-  content_rejected: { label: 'Content Rejected', color: 'bg-red-100 text-red-800' },
-  content_final_approved: { label: 'Content Final Approved', color: 'bg-green-100 text-green-800' },
-  design_pending: { label: 'Design Pending', color: 'bg-orange-100 text-orange-800' },
-  design_submitted: { label: 'Design Submitted', color: 'bg-yellow-100 text-yellow-800' },
-  design_approved: { label: 'Design Approved', color: 'bg-purple-100 text-purple-800' },
-  design_rejected: { label: 'Design Rejected', color: 'bg-red-100 text-red-800' },
-  development_pending: { label: 'Dev Pending', color: 'bg-orange-100 text-orange-800' },
-  development_submitted: { label: 'Dev Submitted', color: 'bg-yellow-100 text-yellow-800' },
-  development_approved: { label: 'Dev Approved', color: 'bg-purple-100 text-purple-800' },
+  content_pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+  content_submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-800' },
+  content_approved: { label: 'Approved', color: 'bg-purple-100 text-purple-800' },
+  content_rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800' },
+  content_final_approved: { label: 'Completed', color: 'bg-green-100 text-green-800' },
+  design_pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+  design_submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-800' },
+  design_approved: { label: 'Approved', color: 'bg-purple-100 text-purple-800' },
+  design_rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800' },
+  development_pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+  development_submitted: { label: 'Submitted', color: 'bg-blue-100 text-blue-800' },
+  development_approved: { label: 'Approved', color: 'bg-purple-100 text-purple-800' },
 };
 
 export default function TeamMemberProjectView() {
@@ -48,6 +49,7 @@ export default function TeamMemberProjectView() {
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [activeTab, setActiveTab] = useState('summary');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const isDeveloper = user?.role === 'developer';
   const isGraphicDesigner = user?.role === 'graphic_designer';
@@ -98,22 +100,57 @@ export default function TeamMemberProjectView() {
       return task.taskType === 'video_editing';
     }
     if (isContentWriter) {
-      // Content Writers see content_creation tasks
-      return task.taskType === 'content_creation';
+      // Content Writers see content_creation and content_writing tasks
+      return ['content_creation', 'content_writing'].includes(task.taskType);
     }
     return false;
   });
 
+  // Get role-specific status groups
+  const getPendingStatuses = () => {
+    if (isContentWriter) return ['todo', 'content_pending', 'pending'];
+    if (isGraphicDesigner || isUIDesigner || isVideoEditor) return ['todo', 'design_pending', 'pending'];
+    if (isDeveloper) return ['todo', 'development_pending', 'pending'];
+    return ['todo', 'pending'];
+  };
+
+  const getInProgressStatuses = () => {
+    if (isContentWriter) return ['in_progress', 'content_submitted', 'submitted'];
+    if (isGraphicDesigner || isUIDesigner || isVideoEditor) return ['in_progress', 'design_submitted', 'submitted'];
+    if (isDeveloper) return ['in_progress', 'development_submitted', 'submitted'];
+    return ['in_progress', 'submitted'];
+  };
+
+  const getCompletedStatuses = () => {
+    if (isContentWriter) return ['content_final_approved', 'content_approved', 'approved_by_tester', 'final_approved'];
+    if (isGraphicDesigner || isUIDesigner || isVideoEditor) return ['design_approved', 'approved_by_tester', 'development_pending', 'final_approved'];
+    if (isDeveloper) return ['development_approved', 'approved_by_tester', 'final_approved'];
+    return ['approved_by_tester', 'final_approved'];
+  };
+
+  const getRejectedStatuses = () => {
+    if (isContentWriter) return ['content_rejected', 'rejected'];
+    if (isGraphicDesigner || isUIDesigner || isVideoEditor) return ['design_rejected', 'rejected'];
+    if (isDeveloper) return ['rejected'];
+    return ['rejected'];
+  };
+
   // Group tasks by status
-  const pendingTasks = filteredTasks.filter(t =>
-    ['todo', 'content_pending', 'design_pending', 'development_pending'].includes(t.status)
-  );
-  const inProgressTasks = filteredTasks.filter(t =>
-    ['in_progress', 'submitted', 'content_submitted', 'design_submitted', 'development_submitted'].includes(t.status)
-  );
-  const completedTasks = filteredTasks.filter(t =>
-    ['approved_by_tester', 'content_approved', 'design_approved', 'development_approved', 'final_approved', 'content_final_approved'].includes(t.status)
-  );
+  const pendingTasks = filteredTasks.filter(t => getPendingStatuses().includes(t.status));
+  const inProgressTasks = filteredTasks.filter(t => getInProgressStatuses().includes(t.status));
+  const completedTasks = filteredTasks.filter(t => getCompletedStatuses().includes(t.status));
+  const rejectedTasks = filteredTasks.filter(t => getRejectedStatuses().includes(t.status));
+
+  // Apply status filter
+  const displayTasks = statusFilter === 'all'
+    ? filteredTasks
+    : filteredTasks.filter(t => {
+        if (statusFilter === 'pending') return getPendingStatuses().includes(t.status);
+        if (statusFilter === 'in_progress') return getInProgressStatuses().includes(t.status);
+        if (statusFilter === 'completed') return getCompletedStatuses().includes(t.status);
+        if (statusFilter === 'rejected') return getRejectedStatuses().includes(t.status);
+        return true;
+      });
 
   const getStatusBadge = (status) => {
     const config = STATUS_CONFIG[status] || STATUS_CONFIG.todo;
@@ -133,6 +170,16 @@ export default function TeamMemberProjectView() {
         {config.label}
       </span>
     );
+  };
+
+  // Get role label
+  const getRoleLabel = () => {
+    if (isContentWriter) return 'Content Writer';
+    if (isGraphicDesigner) return 'Graphic Designer';
+    if (isUIDesigner) return 'UI/UX Designer';
+    if (isVideoEditor) return 'Video Editor';
+    if (isDeveloper) return 'Developer';
+    return 'Team Member';
   };
 
   if (loading) {
@@ -207,62 +254,102 @@ export default function TeamMemberProjectView() {
       {activeTab === 'tasks' && (
         <div className="space-y-6">
           {/* Task Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardBody className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Pending</p>
-                    <p className="text-2xl font-bold text-gray-900">{pendingTasks.length}</p>
-                  </div>
-                  <div className="p-3 bg-orange-100 rounded-lg">
-                    <Clock className="w-6 h-6 text-orange-600" />
-                  </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div
+              onClick={() => setStatusFilter(statusFilter === 'pending' ? 'all' : 'pending')}
+              className={`stat-card-enhanced cursor-pointer transition-all ${statusFilter === 'pending' ? 'ring-2 ring-yellow-500' : ''}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Pending</p>
+                  <p className="text-2xl font-bold text-gray-900">{pendingTasks.length}</p>
                 </div>
-              </CardBody>
-            </Card>
+                <div className="p-3 bg-yellow-100 rounded-xl">
+                  <Clock className="w-5 h-5 text-yellow-600" />
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardBody className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">In Progress</p>
-                    <p className="text-2xl font-bold text-blue-600">{inProgressTasks.length}</p>
-                  </div>
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Play className="w-6 h-6 text-blue-600" />
-                  </div>
+            <div
+              onClick={() => setStatusFilter(statusFilter === 'in_progress' ? 'all' : 'in_progress')}
+              className={`stat-card-enhanced cursor-pointer transition-all ${statusFilter === 'in_progress' ? 'ring-2 ring-blue-500' : ''}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">In Progress</p>
+                  <p className="text-2xl font-bold text-blue-600">{inProgressTasks.length}</p>
                 </div>
-              </CardBody>
-            </Card>
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <Send className="w-5 h-5 text-blue-600" />
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardBody className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500">Completed</p>
-                    <p className="text-2xl font-bold text-green-600">{completedTasks.length}</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
+            <div
+              onClick={() => setStatusFilter(statusFilter === 'completed' ? 'all' : 'completed')}
+              className={`stat-card-enhanced cursor-pointer transition-all ${statusFilter === 'completed' ? 'ring-2 ring-green-500' : ''}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Completed</p>
+                  <p className="text-2xl font-bold text-green-600">{completedTasks.length}</p>
                 </div>
-              </CardBody>
-            </Card>
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+              </div>
+            </div>
+
+            <div
+              onClick={() => setStatusFilter(statusFilter === 'rejected' ? 'all' : 'rejected')}
+              className={`stat-card-enhanced cursor-pointer transition-all ${statusFilter === 'rejected' ? 'ring-2 ring-red-500' : ''}`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Rejected</p>
+                  <p className="text-2xl font-bold text-red-600">{rejectedTasks.length}</p>
+                </div>
+                <div className="p-3 bg-red-100 rounded-xl">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* Filter indicator */}
+          {statusFilter !== 'all' && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Showing:</span>
+              <Badge
+                variant="primary"
+                className="cursor-pointer"
+                onClick={() => setStatusFilter('all')}
+              >
+                {statusFilter === 'pending' && 'Pending'}
+                {statusFilter === 'in_progress' && 'In Progress'}
+                {statusFilter === 'completed' && 'Completed'}
+                {statusFilter === 'rejected' && 'Rejected'}
+                <XCircle className="w-3 h-3 ml-1" />
+              </Badge>
+            </div>
+          )}
+
           {/* Tasks List */}
-          {filteredTasks.length === 0 ? (
+          {displayTasks.length === 0 ? (
             <Card>
               <CardBody className="text-center py-12">
                 <ClipboardList className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-500">No tasks assigned to you for this project</p>
+                <p className="text-gray-500">
+                  {statusFilter !== 'all'
+                    ? `No ${statusFilter.replace('_', ' ')} tasks`
+                    : `No tasks assigned to you for this project`}
+                </p>
               </CardBody>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {filteredTasks.map((task) => (
-                <Card key={task._id} className="hover:shadow-md transition-shadow">
+            <div className="space-y-3">
+              {displayTasks.map((task) => (
+                <Card key={task._id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/tasks/${task._id}`)}>
                   <CardBody className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -270,7 +357,7 @@ export default function TeamMemberProjectView() {
                           {getTaskTypeBadge(task.taskType)}
                           {getStatusBadge(task.status)}
                         </div>
-                        <h3 className="font-semibold text-gray-900">{task.taskTitle}</h3>
+                        <h3 className="font-semibold text-gray-900">{task.creativeName || task.taskTitle}</h3>
                         {task.dueDate && (
                           <p className="text-sm text-gray-500 mt-1">
                             Due: {new Date(task.dueDate).toLocaleDateString()}
@@ -280,7 +367,7 @@ export default function TeamMemberProjectView() {
                         {/* Strategy Context Preview */}
                         {task.strategyContext && (
                           <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                            <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                               {task.strategyContext.platform && (
                                 <div>
                                   <span className="text-gray-500">Platform:</span>{' '}
@@ -288,27 +375,73 @@ export default function TeamMemberProjectView() {
                                 </div>
                               )}
                               {task.strategyContext.hook && (
-                                <div>
+                                <div className="col-span-2">
                                   <span className="text-gray-500">Hook:</span>{' '}
-                                  <span className="font-medium">{task.strategyContext.hook.substring(0, 30)}...</span>
+                                  <span className="font-medium">{task.strategyContext.hook.substring(0, 50)}...</span>
+                                </div>
+                              )}
+                              {task.strategyContext.headline && (
+                                <div className="col-span-2">
+                                  <span className="text-gray-500">Headline:</span>{' '}
+                                  <span className="font-medium">{task.strategyContext.headline.substring(0, 50)}...</span>
                                 </div>
                               )}
                             </div>
+                          </div>
+                        )}
+
+                        {/* Content Output Preview for Content Writers */}
+                        {isContentWriter && task.contentOutput && (
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                            <p className="text-xs text-blue-600 font-medium mb-1">Content Preview:</p>
+                            {task.contentOutput.headline && (
+                              <p className="text-sm font-semibold text-gray-900">{task.contentOutput.headline}</p>
+                            )}
+                            {task.contentOutput.bodyText && (
+                              <p className="text-sm text-gray-600 line-clamp-2">{task.contentOutput.bodyText.substring(0, 100)}...</p>
+                            )}
                           </div>
                         )}
                       </div>
 
                       <Button
                         size="sm"
-                        onClick={() => navigate(`/tasks/${task._id}`)}
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/tasks/${task._id}`);
+                        }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        View Task
+                        View
                       </Button>
                     </div>
                   </CardBody>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {/* Quick Actions */}
+          {filteredTasks.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-3">Quick Actions</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/tasks?status=pending`)}
+                >
+                  View Pending Tasks
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/tasks?status=submitted`)}
+                >
+                  View Submitted Tasks
+                </Button>
+              </div>
             </div>
           )}
         </div>
