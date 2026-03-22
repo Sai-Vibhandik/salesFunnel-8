@@ -274,51 +274,7 @@ const projectSchema = new mongoose.Schema({
   reviewedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  },
-  // Vision Board - uploaded files for vision board
-  visionBoard: [{
-    fileName: {
-      type: String,
-      required: true
-    },
-    filePath: {
-      type: String,
-      required: true
-    },
-    publicId: {
-      type: String
-    },
-    uploadedAt: {
-      type: Date,
-      default: Date.now
-    },
-    uploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    }
-  }],
-  // 10-Year Strategy - uploaded files for long-term strategy
-  tenYearStrategy: [{
-    fileName: {
-      type: String,
-      required: true
-    },
-    filePath: {
-      type: String,
-      required: true
-    },
-    publicId: {
-      type: String
-    },
-    uploadedAt: {
-      type: Date,
-      default: Date.now
-    },
-    uploadedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    }
-  }]
+  }
 }, {
   timestamps: true
 });

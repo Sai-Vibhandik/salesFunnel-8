@@ -84,16 +84,6 @@ export const projectService = {
   updateLandingPage: (projectId, landingPageId, data) => api.put(`/projects/${projectId}/landing-pages/${landingPageId}`, data),
   deleteLandingPage: (projectId, landingPageId) => api.delete(`/projects/${projectId}/landing-pages/${landingPageId}`),
   completeLandingPageStage: (projectId) => api.post(`/projects/${projectId}/landing-pages/complete`),
-  // Vision Board
-  uploadVisionBoard: (projectId, formData) => api.post(`/projects/${projectId}/vision-board`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  deleteVisionBoardFile: (projectId, fileId) => api.delete(`/projects/${projectId}/vision-board/${fileId}`),
-  // 10-Year Strategy
-  uploadTenYearStrategy: (projectId, formData) => api.post(`/projects/${projectId}/ten-year-strategy`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  deleteTenYearStrategyFile: (projectId, fileId) => api.delete(`/projects/${projectId}/ten-year-strategy/${fileId}`),
 };
 
 // Notification service

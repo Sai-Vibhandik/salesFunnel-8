@@ -237,28 +237,6 @@ const taskSchema = new mongoose.Schema({
   submittedAt: { type: Date },
   completedAt: { type: Date },
 
-  // Role-specific completion timestamps (for dashboard statistics)
-  contentCompletedAt: { type: Date, description: 'When content writer completed their work' },
-  designCompletedAt: { type: Date, description: 'When designer completed their work' },
-  developmentCompletedAt: { type: Date, description: 'When developer completed their work' },
-
-  // Original assignee tracking (for dashboard statistics when task is reassigned)
-  originalContentWriter: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    description: 'The content writer who originally created the content (before task was reassigned to designer)'
-  },
-  originalDesigner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    description: 'The designer who originally created the design (before task was reassigned)'
-  },
-  originalDeveloper: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    description: 'The developer who originally developed the landing page'
-  },
-
   // Output/assets
   assetUrl: { type: String },
   outputFiles: [{

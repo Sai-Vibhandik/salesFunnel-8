@@ -271,32 +271,19 @@ exports.updateTask = async (req, res, next) => {
       task.status = status;
 
       // Update assignedRole and assignedTo based on status transition
-      // IMPORTANT: Save original creator BEFORE reassigning to maintain dashboard statistics
       // When submitted for review, assign to the specific tester
       if (status === 'content_submitted') {
-        // Save original content writer BEFORE reassigning to tester
-        if (task.assignedRole === 'content_writer' && task.assignedTo) {
-          task.originalContentWriter = task.assignedTo;
-        }
         task.assignedRole = 'tester';
         // Assign to specific tester if available, otherwise the tester role will handle it
         if (task.testerId) {
           task.assignedTo = task.testerId;
         }
       } else if (status === 'design_submitted') {
-        // Save original designer BEFORE reassigning to tester
-        if (['graphic_designer', 'ui_ux_designer', 'video_editor'].includes(task.assignedRole) && task.assignedTo) {
-          task.originalDesigner = task.assignedTo;
-        }
         task.assignedRole = 'tester';
         if (task.testerId) {
           task.assignedTo = task.testerId;
         }
       } else if (status === 'development_submitted') {
-        // Save original developer BEFORE reassigning to tester
-        if (task.assignedRole === 'developer' && task.assignedTo) {
-          task.originalDeveloper = task.assignedTo;
-        }
         task.assignedRole = 'tester';
         if (task.testerId) {
           task.assignedTo = task.testerId;
@@ -326,16 +313,6 @@ exports.updateTask = async (req, res, next) => {
       }
       if (status === 'final_approved') {
         task.completedAt = new Date();
-      }
-      // Track role-specific completion timestamps for dashboard statistics
-      if (status === 'content_final_approved') {
-        task.contentCompletedAt = new Date();
-      }
-      if (status === 'design_approved') {
-        task.designCompletedAt = new Date();
-      }
-      if (status === 'development_approved') {
-        task.developmentCompletedAt = new Date();
       }
 
       task.addRevision(req.user._id, notes || '', oldStatus, status);
@@ -554,9 +531,6 @@ exports.testerReview = async (req, res, next) => {
         // Marketer will only review the final design/video
         newStatus = 'content_final_approved';
 
-        // Set completion timestamp (originalContentWriter was already saved during submission)
-        task.contentCompletedAt = new Date();
-
         // Determine which role should receive the design task based on creativeOutputType
         const videoTypes = ['video_creative', 'ugc_content', 'testimonial_content', 'demo_video', 'reel'];
         const isVideoTask = task.creativeOutputType && videoTypes.includes(task.creativeOutputType);
@@ -577,10 +551,6 @@ exports.testerReview = async (req, res, next) => {
       } else if (task.taskType === 'landing_page_design' || task.status === 'design_submitted') {
         // Design approved by tester - goes to marketer for final approval
         newStatus = 'design_approved';
-
-        // Set completion timestamp (originalDesigner was already saved during submission)
-        task.designCompletedAt = new Date();
-
         task.assignedRole = 'performance_marketer';
         // Assign to specific marketer if available
         if (task.marketerId) {
@@ -591,10 +561,6 @@ exports.testerReview = async (req, res, next) => {
       } else if (task.taskType === 'landing_page_development' || task.status === 'development_submitted') {
         // Development approved by tester - goes to marketer for final approval
         newStatus = 'development_approved';
-
-        // Set completion timestamp (originalDeveloper was already saved during submission)
-        task.developmentCompletedAt = new Date();
-
         task.assignedRole = 'performance_marketer';
         // Assign to specific marketer if available
         if (task.marketerId) {
@@ -617,10 +583,6 @@ exports.testerReview = async (req, res, next) => {
       if (task.status === 'content_submitted') {
         newStatus = 'content_rejected';
         task.assignedRole = 'content_writer';
-        // Re-assign to the ORIGINAL content writer
-        if (task.originalContentWriter) {
-          task.assignedTo = task.originalContentWriter;
-        }
       } else if (task.status === 'design_submitted') {
         newStatus = 'design_rejected';
         // Assign back to the appropriate designer based on task type
@@ -629,17 +591,9 @@ exports.testerReview = async (req, res, next) => {
         } else {
           task.assignedRole = 'graphic_designer';
         }
-        // Re-assign to the ORIGINAL designer
-        if (task.originalDesigner) {
-          task.assignedTo = task.originalDesigner;
-        }
       } else if (task.status === 'development_submitted') {
         newStatus = 'development_pending';
         task.assignedRole = 'developer';
-        // Re-assign to the ORIGINAL developer
-        if (task.originalDeveloper) {
-          task.assignedTo = task.originalDeveloper;
-        }
       } else {
         newStatus = 'rejected';
         task.assignedRole = Task.getRoleForTaskType(task.taskType);
@@ -661,34 +615,10 @@ exports.testerReview = async (req, res, next) => {
 
     await task.save();
 
-    // Notify the assigned user (new assignee - designer or marketer)
+    // Notify assigned user
     if (task.assignedTo) {
       await Notification.create({
         recipient: task.assignedTo._id || task.assignedTo,
-        type: notificationType,
-        title: approved ? 'Task Approved by Tester' : 'Task Rejected',
-        message: notificationMessage,
-        projectId: task.projectId?._id || task.projectId
-      });
-    }
-
-    // Also notify the ORIGINAL creator for approval/rejection notifications
-    // (so content writer knows their content was approved even though task moved to designer)
-    let originalCreator = null;
-    if (approved) {
-      if (newStatus === 'content_final_approved' && task.originalContentWriter) {
-        originalCreator = task.originalContentWriter;
-      } else if (newStatus === 'design_approved' && task.originalDesigner) {
-        originalCreator = task.originalDesigner;
-      } else if (newStatus === 'development_approved' && task.originalDeveloper) {
-        originalCreator = task.originalDeveloper;
-      }
-    }
-    // For rejection, the task is reassigned to original creator, so they get notified above
-
-    if (originalCreator && originalCreator.toString() !== (task.assignedTo?._id?.toString() || task.assignedTo?.toString())) {
-      await Notification.create({
-        recipient: originalCreator,
         type: notificationType,
         title: approved ? 'Task Approved by Tester' : 'Task Rejected',
         message: notificationMessage,
@@ -1737,33 +1667,20 @@ exports.getMyRoleTasks = async (req, res, next) => {
       query.status = { $in: ['content_approved', 'design_approved', 'development_approved'] };
       query.marketerId = req.user._id;
     } else {
-      // For creators, designers, developers - show ALL their tasks including completed ones
-      // Use $or to find tasks where:
-      // 1. Task is currently assigned to them (assignedTo + assignedRole)
-      // 2. OR they were the original creator (originalContentWriter, originalDesigner, originalDeveloper)
-
-      const originalField = assignedRole === 'content_writer' ? 'originalContentWriter'
-        : assignedRole === 'graphic_designer' || assignedRole === 'ui_ux_designer' || assignedRole === 'video_editor' ? 'originalDesigner'
-        : assignedRole === 'developer' ? 'originalDeveloper' : null;
-
-      if (originalField) {
-        query.$or = [
-          { assignedRole: assignedRole, assignedTo: req.user._id },
-          { [originalField]: req.user._id }
-        ];
-      } else {
-        query.assignedRole = assignedRole;
-        query.assignedTo = req.user._id;
-      }
-
-      // If a specific status is requested, filter by that status
+      // For creators, designers, developers - show their assigned tasks
+      query.assignedRole = assignedRole;
+      query.assignedTo = req.user._id;
+      const statuses = {
+        content_writer: ['content_pending', 'content_rejected'],
+        graphic_designer: ['design_pending', 'design_rejected'],
+        video_editor: ['design_pending', 'design_rejected'],
+        ui_ux_designer: ['design_pending', 'design_rejected'],
+        developer: ['development_pending']
+      };
       if (status) {
-        // Apply status filter to both conditions in $or
-        if (query.$or) {
-          query.$or = query.$or.map(condition => ({ ...condition, status: status }));
-        } else {
-          query.status = status;
-        }
+        query.status = status;
+      } else if (statuses[assignedRole]) {
+        query.status = { $in: statuses[assignedRole] };
       }
     }
 
