@@ -1385,7 +1385,7 @@ export default function TaskDetailPage() {
           </Card>
 
           {/* SOP Reference */}
-          {task.sopReference && (
+          {/* {task.sopReference && (
             <Card>
               <CardBody className="p-6">
                 <h3 className="font-semibold text-gray-900 mb-2">SOP Reference</h3>
@@ -1400,7 +1400,7 @@ export default function TaskDetailPage() {
                 </a>
               </CardBody>
             </Card>
-          )}
+          )} */}
         </div>
       </div>
 

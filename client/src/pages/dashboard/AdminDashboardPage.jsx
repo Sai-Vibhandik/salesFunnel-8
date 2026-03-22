@@ -113,6 +113,7 @@ const AVAILABILITY_COLORS = {
 function RoleIcon({ role, size = 'md', showLabel = false }) {
   const config = ROLE_ICONS[role] || ROLE_ICONS.admin;
   const Icon = config.icon;
+
   const sizes = { sm: 'w-8 h-8', md: 'w-10 h-10', lg: 'w-12 h-12' };
   const iconSizes = { sm: 16, md: 20, lg: 24 };
   return (
@@ -160,13 +161,18 @@ function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
   );
 }
 
-// Team Member Card — fixed grid layout
+// Team Member Card — fixed grid layout for consistent role column
 function TeamMemberCard({ member, onClick }) {
   const roleConfig = ROLE_ICONS[member.role] || ROLE_ICONS.admin;
   const Icon = roleConfig.icon;
   return (
     <div onClick={onClick} className="team-member-card-enhanced cursor-pointer">
-      <div className="grid items-center gap-3" style={{ gridTemplateColumns: '48px 1fr auto' }}>
+      {/* Grid: avatar | name+email | role badge */}
+      <div
+        className="grid items-center gap-3"
+        style={{ gridTemplateColumns: '48px 1fr auto' }}
+      >
+        {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
             {member.name?.charAt(0).toUpperCase()}
@@ -176,10 +182,14 @@ function TeamMemberCard({ member, onClick }) {
             AVAILABILITY_COLORS[member.availability] || 'bg-gray-400'
           )} />
         </div>
+
+        {/* Name + Email */}
         <div className="min-w-0">
           <h4 className="font-semibold text-gray-900 truncate">{member.name}</h4>
           <p className="text-sm text-gray-500 truncate">{member.email}</p>
         </div>
+
+        {/* Role badge — always right-aligned, fixed width */}
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <div className={cn('p-1.5 rounded-lg', roleConfig.color)}>
             <Icon size={14} />
@@ -192,6 +202,8 @@ function TeamMemberCard({ member, onClick }) {
           </span>
         </div>
       </div>
+
+      {/* Specialization */}
       {member.specialization && (
         <p className="mt-2 text-xs text-gray-400 pl-[60px]">{member.specialization}</p>
       )}
@@ -328,7 +340,10 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
     <ModalPortal>
       <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={onClose} aria-hidden="true" />
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none" aria-modal="true" role="dialog">
-        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-gray-900">
@@ -359,6 +374,10 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
                 ))}
               </div>
             </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
             {strategy.stages.marketResearch?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Market Research</h4>
@@ -386,6 +405,10 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
                 )}
               </div>
             )}
+<<<<<<< HEAD
+=======
+
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
             {strategy.stages.offerEngineering?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Offer Engineering</h4>
@@ -399,6 +422,10 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
                 </div>
               </div>
             )}
+<<<<<<< HEAD
+=======
+
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
             {strategy.stages.trafficStrategy?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Traffic Strategy</h4>
@@ -415,6 +442,10 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
                 </div>
               </div>
             )}
+<<<<<<< HEAD
+=======
+
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
             {strategy.stages.landingPage?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Landing Page</h4>
@@ -428,6 +459,10 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
                 </div>
               </div>
             )}
+<<<<<<< HEAD
+=======
+
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
             {strategy.stages.creativeStrategy?.data && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <h4 className="font-medium text-gray-900 mb-2">Creative Strategy</h4>
@@ -441,6 +476,10 @@ function StrategyDetailModal({ strategy, onClose, onReview }) {
                 </div>
               </div>
             )}
+<<<<<<< HEAD
+=======
+
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
             <div className="mt-6 pt-4 border-t border-gray-200">
               <h4 className="font-medium text-gray-900 mb-3">Assigned Team</h4>
               <div className="flex flex-wrap gap-3">
@@ -555,7 +594,10 @@ export default function AdminDashboardPage() {
     fetchData();
   };
 
+<<<<<<< HEAD
   // Pie chart: In Progress, Completed, Paused
+=======
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
   const getTaskStatusData = () => {
     const inProgress = stats.activeProjects || 0;
     const completed  = stats.completedProjects || 0;
@@ -568,7 +610,10 @@ export default function AdminDashboardPage() {
     ].filter(item => item.value > 0);
   };
 
+<<<<<<< HEAD
   // Bar chart: each role gets its own color
+=======
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
   const getTeamByRoleData = () => {
     const roleLabels = {
       admin:                'Admin',
@@ -583,7 +628,10 @@ export default function AdminDashboardPage() {
     return Object.entries(teamStats.byRole).map(([role, count]) => ({
       name:  roleLabels[role] || role,
       count,
+<<<<<<< HEAD
       color: ROLE_CHART_COLORS[role] || '#888780',
+=======
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
     }));
   };
 
@@ -653,8 +701,12 @@ export default function AdminDashboardPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<<<<<<< HEAD
 
         {/* ── Pie Chart ── */}
+=======
+        {/* Pie Chart */}
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
         <div className="lg:col-span-1 chart-container-enhanced">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary-400 to-primary-500">
@@ -713,6 +765,7 @@ export default function AdminDashboardPage() {
               </ResponsiveContainer>
             </div>
           ) : (
+<<<<<<< HEAD
             <div className="h-52 flex items-center justify-center text-sm text-gray-400">
               No project data
             </div>
@@ -720,6 +773,22 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ── Bar Chart ── */}
+=======
+            <div className="h-56 flex items-center justify-center text-gray-400">No project data</div>
+          )}
+          <div className="flex flex-wrap justify-center gap-4 mt-4 pt-4 border-t border-gray-100">
+            {taskStatusData.map((item, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="text-sm text-gray-600">{item.name}</span>
+                <span className="text-sm font-semibold text-gray-900">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bar Chart */}
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
         <div className="lg:col-span-2 chart-container-enhanced">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -788,9 +857,13 @@ export default function AdminDashboardPage() {
               </ResponsiveContainer>
             </div>
           ) : (
+<<<<<<< HEAD
             <div className="h-64 flex items-center justify-center text-sm text-gray-400">
               No team data available
             </div>
+=======
+            <div className="h-64 flex items-center justify-center text-gray-400">No team data available</div>
+>>>>>>> f501970e6911a63843a3e783174758579c3c38f0
           )}
         </div>
       </div>

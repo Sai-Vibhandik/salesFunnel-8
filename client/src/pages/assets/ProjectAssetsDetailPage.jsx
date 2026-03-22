@@ -22,7 +22,7 @@ import {
   XCircle,
   ClipboardList,
   Clock,
-  Send
+  Send,
 } from 'lucide-react';
 
 const TASK_TYPE_CONFIG = {

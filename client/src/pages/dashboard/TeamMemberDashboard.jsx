@@ -21,6 +21,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import ContentWriterDashboard from './ContentWriterDashboard';
 
 const ROLE_CONFIG = {
   content_writer: {
@@ -116,6 +117,11 @@ export default function TeamMemberDashboard({ user }) {
   const roleConfig = ROLE_CONFIG[user?.role] || ROLE_CONFIG.graphic_designer;
   const Icon = roleConfig.icon;
   const isTester = user?.role === 'tester';
+
+  // Use ContentWriterDashboard for content_writer role
+  if (user?.role === 'content_writer') {
+    return <ContentWriterDashboard user={user} />;
+  }
 
   useEffect(() => {
     fetchDashboardData();
